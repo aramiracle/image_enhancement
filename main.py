@@ -43,9 +43,15 @@ class CNNImageEnhancementModel(nn.Module):
             nn.ReLU(),
             nn.Conv2d(128, 256, kernel_size=3, padding=1),
             nn.ReLU(),
+            nn.Conv2d(256, 512, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(512, 512, kernel_size=3, padding=1),
+            nn.ReLU(),
         )
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.decoder = nn.Sequential(
+            nn.Conv2d(512, 256, kernel_size=3, padding=1),
+            nn.ReLU(),
             nn.Conv2d(256, 128, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(128, output_channels, kernel_size=3, padding=1),
@@ -58,6 +64,21 @@ class CNNImageEnhancementModel(nn.Module):
         decoded = self.decoder(upscaled)
         return decoded
 
+
+# Create a directory for saved models
+model_save_dir = 'saved_models'
+os.makedirs(model_save_dir, exist_ok=True)
+
+# Check if a pre-trained model exists and load it
+pretrained_model_path = os.path.join(model_save_dir, 'cnn_image_enhancement_model.pth')
+if os.path.exists(pretrained_model_path):
+    print("Loading pre-trained model...")
+    model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
+    model.load_state_dict(torch.load(pretrained_model_path))
+    print("Pre-trained model loaded successfully.")
+else:
+    model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
+    print("No pre-trained model found. Training a new model...")
 
 # Load your training and test datasets
 train_input_root_dir = 'data/DIV2K_train_HR_50x40'  # Low-resolution input
@@ -74,15 +95,12 @@ batch_size = 64
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-# Instantiate the model
-model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
-
 # Loss function and optimizer
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# Training loop
-num_epochs = 10
+# Training loop (you can continue training or start from scratch)
+num_epochs = 10  # You can adjust the number of epochs as needed
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
@@ -107,7 +125,9 @@ for epoch in range(num_epochs):
     print(f"Epoch [{epoch+1}/{num_epochs}] Average Loss: {average_loss:.4f}")
 
 # Save the trained model
-torch.save(model.state_dict(), 'cnn_image_enhancement_model.pth')
+model_save_path = os.path.join(model_save_dir, 'cnn_image_enhancement_model.pth')
+torch.save(model.state_dict(), model_save_path)
+print(f"Trained model saved to {model_save_path}")
 
 # Testing phase
 test_output_dir = 'result'
