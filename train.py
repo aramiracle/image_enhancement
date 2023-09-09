@@ -17,7 +17,7 @@ class PSNRLoss(nn.Module):
         mse = torch.mean((prediction - target) ** 2)
         
         # Calculate PSNR
-        psnr = 10 * torch.log10(1.0 / mse)
+        psnr = -10 * torch.log10(mse)
         
         # PSNR is typically used as a quality metric, so you want to minimize the negative PSNR
         # Invert the sign to use it as a loss
