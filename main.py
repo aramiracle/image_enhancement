@@ -1,13 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torchvision.models as models
-import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
+from torchvision import transforms
 from PIL import Image
 import os
+from tqdm import tqdm
 
-# Define a custom dataset for loading image pairs (original and enhanced)
+# Define a custom dataset for loading high-resolution image pairs
 class ImageEnhancementDataset(Dataset):
     def __init__(self, input_root_dir, output_root_dir, transform=None):
         self.input_root_dir = input_root_dir
@@ -32,61 +32,50 @@ class ImageEnhancementDataset(Dataset):
 
         return input_image, output_image
 
-# Define a CNN-Transformer model for image enhancement with fixed input and output size
-class CNNTransformerModel(nn.Module):
-    def __init__(self, cnn_backbone, transformer_encoder, output_size):
-        super(CNNTransformerModel, self).__init__()
-        self.cnn_backbone = cnn_backbone
-        self.transformer_encoder = transformer_encoder
-        self.decoder = nn.Sequential(
-            nn.Conv2d(2048, 1024, kernel_size=3, padding=1),
+# Define a CNN-based model for image enhancement
+class CNNImageEnhancementModel(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        super(CNNImageEnhancementModel, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(1024, 512, kernel_size=3, padding=1),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Conv2d(512, 3, kernel_size=3, padding=1)
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.ReLU(),
         )
-        self.output_size = output_size
+        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.decoder = nn.Sequential(
+            nn.Conv2d(256, 128, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(128, output_channels, kernel_size=3, padding=1),
+            nn.Sigmoid(),
+        )
 
     def forward(self, x):
-        features = self.cnn_backbone(x)
-        # Reshape the features to match the expected input size of the transformer
-        features = features.view(features.size(0), -1, 2048).permute(1, 0, 2)
-        encoded_features = self.transformer_encoder(features)
-        # Reshape the encoded features back to the original size
-        encoded_features = encoded_features.permute(1, 0, 2).view(features.size(1), -1, *self.output_size, 2048)
-        enhanced_image = self.decoder(encoded_features.permute(0, 4, 1, 2, 3).reshape(-1, *self.output_size, 3))
-        return enhanced_image
+        encoded = self.encoder(x)
+        upscaled = self.upscale(encoded)
+        decoded = self.decoder(upscaled)
+        return decoded
 
-# Data preprocessing and augmentation
-transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Adjust to your fixed size
-    transforms.ToTensor(),
-])
 
-# Load your training dataset from the provided input and output directories
-input_root_dir = 'data/DIV2K_train_HR_1_8'
-output_root_dir = 'data/DIV2K_train_HR_1_4'
-train_dataset = ImageEnhancementDataset(input_root_dir, output_root_dir, transform=transform)
+# Load your training and test datasets
+train_input_root_dir = 'data/DIV2K_train_HR_50x40'  # Low-resolution input
+train_output_root_dir = 'data/DIV2K_train_HR_100x80'  # High-resolution output
+test_input_root_dir = 'data/DIV2K_valid_HR_100x80'  # Test set high-resolution input
 
-# DataLoader for training
-batch_size = 16
-train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+transform = transforms.Compose([transforms.ToTensor()])
 
-# Specify the fixed input and output size
-input_size = (3, 256, 256)  # Channels x Height x Width
-output_size = (3, 256, 256)  # Channels x Height x Width
+train_dataset = ImageEnhancementDataset(train_input_root_dir, train_output_root_dir, transform=transform)
+test_dataset = ImageEnhancementDataset(test_input_root_dir, test_input_root_dir, transform=transform)
 
-# Instantiate the CNN backbone (e.g., ResNet-50)
-cnn_backbone = models.regnet_y_16gf(pretrained=True)
-cnn_backbone = nn.Sequential(*list(cnn_backbone.children())[:-2])  # Remove last two layers
+# DataLoaders
+batch_size = 64
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-# Instantiate the Transformer encoder (you can configure its layers as needed)
-transformer_encoder = nn.TransformerEncoder(
-    nn.TransformerEncoderLayer(d_model=2048, nhead=8), num_layers=4
-)
-
-# Instantiate the CNN-Transformer model with fixed input and output size
-model = CNNTransformerModel(cnn_backbone, transformer_encoder, output_size)
+# Instantiate the model
+model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
 
 # Loss function and optimizer
 criterion = nn.MSELoss()
@@ -98,44 +87,41 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 for epoch in range(num_epochs):
-    model.train()  # Set the model to training mode
-    for batch in train_dataloader:
+    model.train()
+    running_loss = 0.0
+    
+    for batch in tqdm(train_loader, desc=f"Epoch [{epoch+1}/{num_epochs}]"):
         input_batch, output_batch = batch
         input_batch, output_batch = input_batch.to(device), output_batch.to(device)
         
         optimizer.zero_grad()
         outputs = model(input_batch)
+
         loss = criterion(outputs, output_batch)
         loss.backward()
         optimizer.step()
+        
+        running_loss += loss.item()
     
-    print(f"Epoch [{epoch+1}/{num_epochs}] Loss: {loss.item()}")
+    average_loss = running_loss / len(train_loader)
+    print(f"Epoch [{epoch+1}/{num_epochs}] Average Loss: {average_loss:.4f}")
 
 # Save the trained model
-torch.save(model.state_dict(), 'image_enhancement_model.pth')
+torch.save(model.state_dict(), 'cnn_image_enhancement_model.pth')
 
 # Testing phase
-test_transform = transforms.Compose([
-    transforms.Resize((256, 256)),  # Adjust to your fixed size
-    transforms.ToTensor(),
-])
+test_output_dir = 'result'
 
-test_root_dir = 'data/DIV2K_valid_HR_1_8'
-test_dataset = ImageEnhancementDataset(test_root_dir, output_root_dir, transform=test_transform)
-test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-model.eval()  # Set the model to evaluation mode
-test_loss = 0.0
+model.eval()
+os.makedirs(test_output_dir, exist_ok=True)
 
 with torch.no_grad():
-    for batch in test_dataloader:
-        input_batch, output_batch = batch
-        input_batch, output_batch = input_batch.to(device), output_batch.to(device)
-        outputs = model(input_batch)
-        loss = criterion(outputs, output_batch)
-        test_loss += loss.item()
+    for i, (input_image, _) in enumerate(test_loader):
+        input_image = input_image.to(device)
+        enhanced_image = model(input_image)
+        enhanced_image = enhanced_image.squeeze().cpu()
+        
+        output_filename = os.path.join(test_output_dir, f"enhanced_{i + 1:04d}.png")
+        transforms.ToPILImage()(enhanced_image).save(output_filename)
 
-# Calculate the average test loss
-average_test_loss = test_loss / len(test_dataloader)
-
-print(f"Average Test Loss: {average_test_loss}")
+print("Testing complete. Enhanced images are saved in the 'result' folder.")
