@@ -37,23 +37,17 @@ class ImageEnhancementDataset(Dataset):
         input_image = Image.open(input_img_name).convert('RGB')
         output_image = Image.open(output_img_name).convert('RGB')
 
-        if self.transform:
-            if self.train:  # Apply data augmentation only during training
-                input_image = self.add_gaussian_blur(input_image)
-                input_image = self.add_gaussian_noise(input_image)
+        if self.train:
+            # Apply random rotation to both input and output images
+            angle = random.randint(-45, 45)  # You can adjust the rotation range as needed
+            input_image = input_image.rotate(angle)
+            output_image = output_image.rotate(angle)
 
+            input_image = self.add_gaussian_blur(input_image)
+            input_image = self.add_gaussian_noise(input_image)
+
+        if self.transform:
             input_image = self.transform(input_image)
             output_image = self.transform(output_image)
 
         return input_image, output_image
-
-def get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, batch_size):
-    transform = transforms.Compose([transforms.ToTensor()])
-
-    train_dataset = ImageEnhancementDataset(train_input_root_dir, train_output_root_dir, transform=transform, train=True)
-    test_dataset = ImageEnhancementDataset(test_input_root_dir, test_input_root_dir, transform=transform, train=False)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
-
-    return train_loader, test_loader
