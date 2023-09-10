@@ -17,13 +17,13 @@ class ImageEnhancementDataset(Dataset):
     def __len__(self):
         return len(self.input_image_list)
 
-    def add_gaussian_blur(self, image, kernel_size=5, sigma=1):
-        if random.random() < 0.7:  # Apply blur with 70% probability
+    def add_gaussian_blur(self, image, kernel_size=5, sigma=0.5):
+        if random.random() < 0.5:  # Apply blur with 50% probability
             image = transforms.GaussianBlur(kernel_size, sigma)(image)
         return image
 
     def add_gaussian_noise(self, image, mean=0, std=0.001):
-        if random.random() < 0.7:  # Apply noise with 70% probability
+        if random.random() < 0.5:  # Apply noise with 50% probability
             image = transforms.ToTensor()(image)
             noise = torch.randn_like(image) * std + mean
             image = image + noise

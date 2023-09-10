@@ -5,10 +5,10 @@ from model import CNNImageEnhancementModel  # Import your custom model class
 import math
 
 # Define the path to the latest saved model
-model_path = "saved_models/cnn_image_enhancement_model_final.pth"
+model_path = "saved_models/cnn/cnn_image_enhancement_model_final.pth"
 
 # Define the enhancement factor (log2(ratio))
-enhancement_factor = 5.0  # Set the enhancement factor to 5
+enhancement_factor = 3.0  # Set the enhancement factor to 5
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([

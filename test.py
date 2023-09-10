@@ -4,13 +4,14 @@ from torchvision import transforms
 from model import CNNImageEnhancementModel
 from data_loader import ImageEnhancementDataset
 import os
+from tqdm import tqdm
 
 def test_model(model, test_loader, device, test_output_dir):
     model.eval()
     os.makedirs(test_output_dir, exist_ok=True)
 
     with torch.no_grad():
-        for i, (input_image, _) in enumerate(test_loader):
+        for i, (input_image, _) in enumerate(tqdm(test_loader)):  # Wrap test_loader with tqdm
             input_image = input_image.to(device)
             enhanced_image = model(input_image)
             enhanced_image = enhanced_image.squeeze().cpu()
