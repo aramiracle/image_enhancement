@@ -5,9 +5,9 @@ from data_loader import get_data_loaders
 from model import *
 
 def main():
-    train_input_root_dir = 'data/DIV2K_train_HR_50x40'
-    train_output_root_dir = 'data/DIV2K_train_HR_100x80'
-    test_input_root_dir = 'data/DIV2K_valid_HR_400x320'
+    train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
+    train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
+    test_input_root_dir = 'data/DIV2K_valid_HR/resized_4'
     batch_size = 100
     num_epochs = 100
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
