@@ -37,13 +37,18 @@ class CNNImageEnhancementModel(nn.Module):
         return decoded
     
 
-# Vision Transformer Encoder
 class VisionTransformerEncoder(nn.Module):
     def __init__(self, input_channels, patch_size, embed_dim, num_heads, num_layers):
         super(VisionTransformerEncoder, self).__init__()
 
         self.patch_embedding = nn.Conv2d(input_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
-        self.positional_embedding = nn.Parameter(torch.randn(1, embed_dim, 64, 64))  # Adjust 64x64 to your image size
+        
+        # Calculate the number of patches based on your input size and patch size
+        num_patches = (input_size // patch_size) ** 2
+        
+        # Adjust the positional embedding size to match the number of patches
+        self.positional_embedding = nn.Parameter(torch.randn(1, num_patches, embed_dim))
+        
         self.transformer = nn.Transformer(d_model=embed_dim, nhead=num_heads, num_encoder_layers=num_layers)
 
     def forward(self, x):
@@ -51,9 +56,8 @@ class VisionTransformerEncoder(nn.Module):
         x = x + self.positional_embedding
         x = rearrange(x, 'b c h w -> b (h w) c')  # Flatten spatial dimensions
         x = self.transformer(x)
-        x = rearrange(x, 'b (h w) c -> b c h w', h=64, w=64)  # Reshape to spatial grid
+        x = rearrange(x, 'b (h w) c -> b c h w', h=(input_size // patch_size), w=(input_size // patch_size))
         return x
-
 # Vision Transformer Decoder
 class VisionTransformerDecoder(nn.Module):
     def __init__(self, embed_dim, num_heads, num_layers):
