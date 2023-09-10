@@ -28,11 +28,19 @@ input_batch = input_tensor.unsqueeze(0)  # Add a batch dimension
 
 # Calculate the number of enhancement iterations based on the enhancement factor
 num_iterations = int(math.log2(enhancement_factor))
+num_chunks = 1
 
-# Perform image enhancement in multiple iterations
+# Perform image enhancement in multiple iterations for each part
 with torch.no_grad():
     for _ in range(num_iterations):
-        input_batch = model(input_batch)
+        # Split the input image into smaller non-overlapping parts
+        parts = torch.chunk(input_batch, num_chunks, dim=-1)
+
+        # Enhance each part separately
+        enhanced_parts = [model(part) for part in parts]
+
+        # Combine the enhanced parts
+        input_batch = torch.cat(enhanced_parts, dim=-1)
 
 # Calculate the final resize factor
 final_resize_factor = enhancement_factor / (2 ** num_iterations)
