@@ -36,7 +36,7 @@ class CNNImageEnhancementModel(nn.Module):
         decoded = self.decoder(upscaled)
         return decoded
     
-
+""""
 class VisionTransformerEncoder(nn.Module):
     def __init__(self, input_channels, patch_size, embed_dim, num_heads, num_layers):
         super(VisionTransformerEncoder, self).__init__()
@@ -110,3 +110,4 @@ class TransformerImageEnhancementModel(nn.Module):
         # Final output
         final_output = self.final_conv(decoded)
         return self.sigmoid(final_output)
+"""

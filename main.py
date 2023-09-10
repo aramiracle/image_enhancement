@@ -9,7 +9,7 @@ def main():
     train_output_root_dir = 'data/DIV2K_train_HR_100x80'
     test_input_root_dir = 'data/DIV2K_valid_HR_400x320'
     batch_size = 100
-    num_epochs = 80
+    num_epochs = 100
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_save_dir = 'saved_models/cnn'
     test_output_dir = 'results/cnn'

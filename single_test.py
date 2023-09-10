@@ -8,7 +8,7 @@ import math
 model_path = "saved_models/cnn/cnn_image_enhancement_model_final.pth"
 
 # Define the enhancement factor (log2(ratio))
-enhancement_factor = 3.0  # Set the enhancement factor to 5
+enhancement_factor = 10.0  # Set the enhancement factor to 5
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([
@@ -28,7 +28,7 @@ input_batch = input_tensor.unsqueeze(0)  # Add a batch dimension
 
 # Calculate the number of enhancement iterations based on the enhancement factor
 num_iterations = int(math.log2(enhancement_factor))
-num_chunks = 1
+num_chunks = 9
 
 # Perform image enhancement in multiple iterations for each part
 with torch.no_grad():
