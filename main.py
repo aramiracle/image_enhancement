@@ -5,11 +5,11 @@ from data_loader import get_data_loaders
 from model import *
 
 def main():
-    train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
-    train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
+    train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
+    train_output_root_dir = 'data/DIV2K_train_HR/resized_100'
     test_input_root_dir = 'data/DIV2K_valid_HR/resized_4'
     batch_size = 100
-    num_epochs = 100
+    num_epochs = 120
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_save_dir = 'saved_models/cnn'
     test_output_dir = 'results/cnn'
