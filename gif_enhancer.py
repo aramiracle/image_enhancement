@@ -2,11 +2,11 @@ import os
 import torch
 import torchvision.transforms as transforms
 import math
-from model import CNNImageEnhancementModel  # Import your custom model class
+from model import SimpleCNNImageEnhancementModel  # Import your custom model class
 import imageio
 
 # Define the path to the latest saved model
-model_path = "saved_models/cnn/cnn_image_enhancement_model_final.pth"
+model_path = "saved_models/simple_cnn/cnn_image_enhancement_model_final.pth"
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 3.0  # Set the enhancement factor
@@ -17,7 +17,7 @@ preprocess = transforms.Compose([
 ])
 
 # Load the latest saved model
-model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
+model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3)
 model.load_state_dict(torch.load(model_path))
 model.eval()  # Set the model to evaluation mode (no gradient computation)
 
@@ -68,10 +68,9 @@ for input_file in input_files:
 
         # Convert the resized output back to a NumPy array (image)
         enhanced_frame = transforms.ToPILImage()(enhanced_frame)
-        enhanced_frame = transforms.ToTensor()(enhanced_frame)
-
+    
         # Append the enhanced frame to the list
-        enhanced_frames.append(enhanced_frame.numpy())
+        enhanced_frames.append(enhanced_frame)
 
     # Construct the output GIF path
     output_gif_file = os.path.splitext(input_file)[0] + "_enhanced.gif"

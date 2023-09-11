@@ -36,6 +36,31 @@ class CNNImageEnhancementModel(nn.Module):
         decoded = self.decoder(upscaled)
         return decoded
     
+    # Define a CNN-based model for image enhancement
+class SimpleCNNImageEnhancementModel(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        super(SimpleCNNImageEnhancementModel, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+        )
+        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.decoder = nn.Sequential(
+            nn.Conv2d(64, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, output_channels, kernel_size=3, padding=1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        upscaled = self.upscale(encoded)
+        decoded = self.decoder(upscaled)
+        return decoded
 """"
 class VisionTransformerEncoder(nn.Module):
     def __init__(self, input_channels, patch_size, embed_dim, num_heads, num_layers):
