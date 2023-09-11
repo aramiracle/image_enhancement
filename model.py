@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as T
 from einops import rearrange
+import math
 
 
 # Define a CNN-based model for image enhancement
@@ -61,78 +62,70 @@ class SimpleCNNImageEnhancementModel(nn.Module):
         upscaled = self.upscale(encoded)
         decoded = self.decoder(upscaled)
         return decoded
-""""
-class VisionTransformerEncoder(nn.Module):
-    def __init__(self, input_channels, patch_size, embed_dim, num_heads, num_layers):
-        super(VisionTransformerEncoder, self).__init__()
 
-        self.patch_embedding = nn.Conv2d(input_channels, embed_dim, kernel_size=patch_size, stride=patch_size)
-        
-        # Calculate the number of patches based on your input size and patch size
-        num_patches = (input_size // patch_size) ** 2
-        
-        # Adjust the positional embedding size to match the number of patches
-        self.positional_embedding = nn.Parameter(torch.randn(1, num_patches, embed_dim))
-        
-        self.transformer = nn.Transformer(d_model=embed_dim, nhead=num_heads, num_encoder_layers=num_layers)
 
-    def forward(self, x):
-        x = self.patch_embedding(x)
-        x = x + self.positional_embedding
-        x = rearrange(x, 'b c h w -> b (h w) c')  # Flatten spatial dimensions
-        x = self.transformer(x)
-        x = rearrange(x, 'b (h w) c -> b c h w', h=(input_size // patch_size), w=(input_size // patch_size))
-        return x
-# Vision Transformer Decoder
-class VisionTransformerDecoder(nn.Module):
-    def __init__(self, embed_dim, num_heads, num_layers):
-        super(VisionTransformerDecoder, self).__init__()
-
-        self.transformer_layers = nn.ModuleList([
-            nn.TransformerDecoderLayer(d_model=embed_dim, nhead=num_heads)
-            for _ in range(num_layers)
-        ])
-
-    def forward(self, x, memory):
-        for layer in self.transformer_layers:
-            x = layer(x, memory)
-        return x
-
-# Complete Transformer-based Image Enhancement Model
 class TransformerImageEnhancementModel(nn.Module):
-    def __init__(self, input_channels, output_channels, patch_size=16, embed_dim=512, num_heads=8, num_layers=6):
+    def __init__(self, input_channels, output_channels, hidden_dim, num_layers, num_heads, dropout=0.1, image_size=50):
         super(TransformerImageEnhancementModel, self).__init__()
-
-        # Vision Transformer Encoder
-        self.encoder = VisionTransformerEncoder(input_channels, patch_size, embed_dim, num_heads, num_layers)
-
-        # Upscaling layer
-        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
-
-        # Convolutional layer after upscaling and before decoding
-        self.conv_before_decode = nn.Conv2d(embed_dim, embed_dim, kernel_size=3, padding=1)
-
-        # Vision Transformer Decoder
-        self.decoder = VisionTransformerDecoder(embed_dim, num_heads, num_layers)
-
-        # Final convolutional layer for output
-        self.final_conv = nn.Conv2d(embed_dim, output_channels, kernel_size=3, padding=1)
-        self.sigmoid = nn.Sigmoid()
-
+        
+        # Calculate positional encoding
+        self.positional_encoding = self.calculate_positional_encoding(input_channels, image_size, hidden_dim)
+        
+        # Transformer Encoder Layers
+        self.transformer_encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(
+                d_model=hidden_dim,
+                nhead=num_heads,
+                dim_feedforward=hidden_dim,
+                dropout=dropout
+            ),
+            num_layers=num_layers
+        )
+        
+        # Upsampling
+        self.upsample = nn.Sequential(
+            nn.Conv2d(input_channels, input_channels * 4, kernel_size=3, padding=1),
+            nn.PixelShuffle(2),
+            nn.ReLU(inplace=True)
+        )
+        
+        # Transformer Decoder Layers
+        self.transformer_decoder = nn.TransformerDecoder(
+            nn.TransformerDecoderLayer(
+                d_model=hidden_dim,
+                nhead=num_heads,
+                dim_feedforward=hidden_dim,
+                dropout=dropout
+            ),
+            num_layers=num_layers
+        )
+        
+        # Final Linear Layer
+        self.final_layer = nn.Linear(hidden_dim, output_channels)
+        
+    def calculate_positional_encoding(self, input_channels, image_size, hidden_dim):
+        position = torch.arange(0, image_size * image_size).unsqueeze(0)
+        div_term = torch.exp(torch.arange(0, hidden_dim, 2) * -(math.log(10000.0) / hidden_dim))
+        position_encoding = torch.zeros(1, image_size * image_size, hidden_dim)
+        position_encoding[:, :, 0::2] = torch.sin(position * div_term)
+        position_encoding[:, :, 1::2] = torch.cos(position * div_term)
+        position_encoding = position_encoding.view(1, input_channels, image_size, image_size, hidden_dim)
+        return position_encoding
+        
     def forward(self, x):
-        # Encoder
-        encoded = self.encoder(x)
-
-        # Upscaling
-        upscaled = self.upscale(encoded.permute(0, 2, 1).unsqueeze(1)).squeeze(1).permute(0, 2, 1)
-
-        # Convolution after upscaling
-        decoded = self.conv_before_decode(upscaled)
-
-        # Decoder
-        decoded = self.decoder(decoded, encoded)
-
-        # Final output
-        final_output = self.final_conv(decoded)
-        return self.sigmoid(final_output)
-"""
+        # Add positional encoding
+        x = x + self.positional_encoding.to(x.device)
+        
+        # Transformer Encoder
+        x_encoded = self.transformer_encoder(x)
+        
+        # Upsampling
+        x_upsampled = self.upsample(x_encoded)
+        
+        # Transformer Decoder
+        enhanced_image = self.transformer_decoder(x_upsampled)
+        
+        # Final Linear Layer
+        enhanced_image = self.final_layer(enhanced_image)
+        
+        return enhanced_image

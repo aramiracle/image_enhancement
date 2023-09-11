@@ -33,9 +33,9 @@ class ImageEnhancementDataset(Dataset):
             output_image = color_jitter(output_image)
 
             # Gaussian blur and noise
-            if random.random() < 0.5:
+            if random.random() < 0.3:
                 input_image = transforms.GaussianBlur(5, 0.5)(input_image)
-            if random.random() < 0.5:
+            if random.random() < 0.3:
                 input_image = transforms.ToTensor()(input_image)
                 noise = torch.randn_like(input_image) * 0.001 + 0
                 input_image = input_image + noise

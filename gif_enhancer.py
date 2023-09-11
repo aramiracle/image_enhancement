@@ -77,6 +77,6 @@ for input_file in input_files:
     output_gif_path = os.path.join(output_directory, output_gif_file)
 
     # Save the enhanced GIF
-    imageio.mimsave(output_gif_path, enhanced_frames)
+    imageio.mimsave(output_gif_path, enhanced_frames, loop=0)
 
     print(f"Enhanced GIF saved to {output_gif_path}")

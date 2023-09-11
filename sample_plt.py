@@ -3,34 +3,34 @@ import random
 from PIL import Image
 import matplotlib.pyplot as plt
 
-def display_random_samples(test_output_dir, test_output_root_dir, num_samples=10):
-    # List the files in the test_output_dir that start with "enhanced_"
-    enhanced_files = [f for f in os.listdir(test_output_dir) if f.startswith("enhanced_")]
+def display_random_samples(test_output_dir, test_output_root_dir, num_samples=1, figsize=(8, 8)):
+    # Generate random numbers between 0 and the number of test images - 1
+    random_numbers = random.sample(range(len(test_output_dir)), num_samples)
 
-    # Shuffle the list of enhanced files
-    random.shuffle(enhanced_files)
+    for i, random_number in enumerate(random_numbers):
+        # Get the corresponding index and filenames
+        index = random_number
+        enhanced_file = sorted(os.listdir(test_output_dir))[index]
+        real_file = sorted(os.listdir(test_output_root_dir))[index]
 
-    # Select num_samples random enhanced images
-    random_samples = enhanced_files[:num_samples]
-
-    # Display the selected random enhanced images along with random real images
-    for i, enhanced_file in enumerate(random_samples):
+        # Load the enhanced and real images
         enhanced_image = Image.open(os.path.join(test_output_dir, enhanced_file))
-        
-        # Find a random real image
-        real_files = os.listdir(test_output_root_dir)
-        random_real_file = random.choice(real_files)
-        real_image = Image.open(os.path.join(test_output_root_dir, random_real_file))
+        real_image = Image.open(os.path.join(test_output_root_dir, real_file))
 
-        # Display the images using matplotlib
-        plt.subplot(2, num_samples, i + 1)
+        # Create a figure with subplots for displaying the image pair
+        plt.figure(figsize=figsize)
+
+        # Display the enhanced image in the first subplot
+        plt.subplot(1, 2, 1)
         plt.imshow(enhanced_image)
         plt.axis('off')
         plt.title("Enhanced")
 
-        plt.subplot(2, num_samples, i + num_samples + 1)
+        # Display the real image in the second subplot
+        plt.subplot(1, 2, 2)
         plt.imshow(real_image)
         plt.axis('off')
         plt.title("Real")
 
-    plt.show()
+        # Show the figure for this pair of images
+        plt.show()
