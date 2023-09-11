@@ -14,8 +14,8 @@ class ImageEnhancementDataset(Dataset):
         self.train = train
 
         # List all input and output image file paths
-        self.input_image_paths = [os.path.join(input_root_dir, fname) for fname in os.listdir(input_root_dir)]
-        self.output_image_paths = [os.path.join(output_root_dir, fname) for fname in os.listdir(output_root_dir)]
+        self.input_image_paths = [os.path.join(input_root_dir, fname) for fname in sorted(os.listdir(input_root_dir))]
+        self.output_image_paths = [os.path.join(output_root_dir, fname) for fname in sorted(os.listdir(output_root_dir))]
 
     def __len__(self):
         return len(self.input_image_paths)

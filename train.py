@@ -76,7 +76,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, save_ev
         average_loss_psnr = running_loss_psnr / len(train_loader)
         average_ssim = running_ssim / len(train_loader)
         
-        print(f"Epoch {epoch+1}/{num_epochs} - PSNR Loss: {average_loss_psnr:.4f}, SSIM: {average_ssim:.4f}", end='\r')
+        print(f"Epoch {epoch+1}/{num_epochs} - PSNR Loss: {average_loss_psnr:.4f}, SSIM: {average_ssim:.4f}")
 
         # Save the model every 'save_every' epochs
         if (epoch + 1) % save_every == 0:

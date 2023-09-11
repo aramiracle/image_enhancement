@@ -27,8 +27,10 @@ def resize_and_save_images(image_file, input_folder, output_folder, target_size=
         resized_image = resize_transform(image)
     elif fraction:
         original_width, original_height = image.size
-        new_width = int(original_width * fraction)
-        new_height = int(original_height * fraction)
+        min_width = int(original_width * min(fractions))
+        min_height = int(original_height * min(fractions))
+        new_width = int(min_width * (fraction // min(fractions)))
+        new_height = int(min_height * (fraction // min(fractions)))
         resize_transform = transforms.Resize((new_height, new_width))
         resized_image = resize_transform(image)
 

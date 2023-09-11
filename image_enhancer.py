@@ -6,7 +6,7 @@ import math
 from model import CNNImageEnhancementModel  # Import your custom model class
 
 # Define the path to the latest saved model
-model_path = "saved_models/cnn/cnn_image_enhancement_model_final.pth"
+model_path = 'saved_models/cnn/best_cnn_image_enhancement_model.pth'
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 3.0  # Set the enhancement factor

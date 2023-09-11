@@ -6,7 +6,7 @@ from model import SimpleCNNImageEnhancementModel  # Import your custom model cla
 import imageio
 
 # Define the path to the latest saved model
-model_path = "saved_models/simple_cnn/cnn_image_enhancement_model_final.pth"
+model_path = "saved_models/simple_cnn/best_cnn_image_enhancement_model.pth"
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 3.0  # Set the enhancement factor
