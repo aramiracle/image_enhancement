@@ -9,8 +9,9 @@ def main():
     train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
     train_output_root_dir = 'data/DIV2K_train_HR/resized_100'
     test_input_root_dir = 'data/DIV2K_valid_HR/resized_4'
+    test_output_root_dir = 'data/DIV2K_valid_HR/resized_2'
     batch_size = 100
-    num_epochs = 120
+    num_epochs = 125
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     model_save_dir = 'saved_models/cnn'
@@ -21,7 +22,7 @@ def main():
     if not os.path.exists(test_output_dir):
         os.mkdir(test_output_dir)
 
-    train_loader, test_loader = get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, batch_size)
+    train_loader, test_loader = get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir,test_output_root_dir, batch_size)
 
     model = CNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 

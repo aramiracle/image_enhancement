@@ -1,8 +1,9 @@
 import torch
 import os
-import re  # Import the regular expression module
+import re
 from tqdm import tqdm
 import torch.nn as nn
+from skimage.metrics import structural_similarity as ssim  # Import SSIM from scikit-image
 
 class PSNRLoss(nn.Module):
     def __init__(self):
@@ -19,6 +20,11 @@ class PSNRLoss(nn.Module):
         # Invert the sign to use it as a loss
         return -psnr
 
+def calculate_ssim(prediction, target):
+    # Calculate SSIM
+    ssim_value = ssim(target.cpu().numpy(), prediction.cpu().numpy(), data_range=1.0, channel_axis=1)
+    return ssim_value
+
 def extract_epoch_number(filename):
     # Use regular expressions to extract the epoch number from the filename
     match = re.search(r"epoch(\d+)", filename)
@@ -27,7 +33,7 @@ def extract_epoch_number(filename):
     return 0  # Default to 0 if no match is found
 
 def train_model(model, train_loader, num_epochs, device, model_save_dir, save_every=5):
-    criterion = PSNRLoss()
+    criterion_psnr = PSNRLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
     # Check if there are saved models in the model_save_dir
@@ -42,9 +48,13 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, save_ev
         model.load_state_dict(torch.load(os.path.join(model_save_dir, latest_model)))
         print(f"Loaded model from epoch {latest_epoch}")
 
+    best_ssim = -float('inf')  # Initialize with negative infinity
+    best_model_path = None
+
     for epoch in range(latest_epoch, num_epochs):
         model.train()
-        running_loss = 0.0
+        running_loss_psnr = 0.0
+        running_ssim = 0.0
         
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", ncols=100):
             input_batch, output_batch = batch
@@ -53,14 +63,20 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, save_ev
             optimizer.zero_grad()
             outputs = model(input_batch)
 
-            loss = criterion(outputs, output_batch)
-            loss.backward()
-            optimizer.step()
-            
-            running_loss += loss.item()
+            loss_psnr = criterion_psnr(outputs, output_batch)
+            running_loss_psnr += loss_psnr.item()
+
+            # Calculate SSIM for this batch and accumulate
+            ssim_value = calculate_ssim(outputs.detach(), output_batch.detach())
+            running_ssim += ssim_value
         
-        average_loss = running_loss / len(train_loader)
-        print(f"Epoch {epoch+1}/{num_epochs} Average PSNR Loss: {average_loss:.4f}")
+            loss_psnr.backward()
+            optimizer.step()
+        
+        average_loss_psnr = running_loss_psnr / len(train_loader)
+        average_ssim = running_ssim / len(train_loader)
+        
+        print(f"Epoch {epoch+1}/{num_epochs} - PSNR Loss: {average_loss_psnr:.4f}, SSIM: {average_ssim:.4f}", end='\r')
 
         # Save the model every 'save_every' epochs
         if (epoch + 1) % save_every == 0:
@@ -68,7 +84,12 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, save_ev
             torch.save(model.state_dict(), model_save_path)
             print(f"Model saved at epoch {epoch+1} to {model_save_path}")
 
-    # Save the final trained model
-    model_save_path = os.path.join(model_save_dir, 'cnn_image_enhancement_model_final.pth')
-    torch.save(model.state_dict(), model_save_path)
-    print(f"Final trained model saved to {model_save_path}")
+        # Check if SSIM is better than the current best
+        if average_ssim > best_ssim:
+            best_ssim = average_ssim
+            best_model_path = os.path.join(model_save_dir, f'best_cnn_image_enhancement_model.pth')
+            torch.save(model.state_dict(), best_model_path)
+    
+    # Save the final best model based on SSIM
+    if best_model_path:
+        print(f"Best model saved based on SSIM to {best_model_path}")

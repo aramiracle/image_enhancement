@@ -58,11 +58,11 @@ class ImageEnhancementDataset(Dataset):
 
         return input_image, output_image
 
-def get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, batch_size):
+def get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, test_output_root_dir, batch_size):
     transform = transforms.Compose([transforms.ToTensor()])
 
     train_dataset = ImageEnhancementDataset(train_input_root_dir, train_output_root_dir, transform=transform, train=True)
-    test_dataset = ImageEnhancementDataset(test_input_root_dir, test_input_root_dir, transform=transform, train=False)
+    test_dataset = ImageEnhancementDataset(test_input_root_dir, test_output_root_dir, transform=transform, train=False)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)

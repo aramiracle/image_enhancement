@@ -14,7 +14,7 @@ test_save_dir = 'data/DIV2K_valid_HR'
 target_sizes = [25, 50, 100, 200, 400]
 
 # Define the fractions for test data
-fractions = [1/4, 1/8, 1/16, 1/32]
+fractions = [1/2, 1/4, 1/8, 1/16, 1/32]
 
 def resize_and_save_images(image_file, input_folder, output_folder, target_size=None, fraction=None):
     # Load the image using PIL
