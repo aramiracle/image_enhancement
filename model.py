@@ -64,68 +64,53 @@ class SimpleCNNImageEnhancementModel(nn.Module):
         return decoded
 
 
-class TransformerImageEnhancementModel(nn.Module):
-    def __init__(self, input_channels, output_channels, hidden_dim, num_layers, num_heads, dropout=0.1, image_size=50):
-        super(TransformerImageEnhancementModel, self).__init__()
-        
-        # Calculate positional encoding
-        self.positional_encoding = self.calculate_positional_encoding(input_channels, image_size, hidden_dim)
-        
-        # Transformer Encoder Layers
-        self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(
-                d_model=hidden_dim,
-                nhead=num_heads,
-                dim_feedforward=hidden_dim,
-                dropout=dropout
-            ),
-            num_layers=num_layers
-        )
-        
-        # Upsampling
-        self.upsample = nn.Sequential(
-            nn.Conv2d(input_channels, input_channels * 4, kernel_size=3, padding=1),
-            nn.PixelShuffle(2),
-            nn.ReLU(inplace=True)
-        )
-        
-        # Transformer Decoder Layers
-        self.transformer_decoder = nn.TransformerDecoder(
-            nn.TransformerDecoderLayer(
-                d_model=hidden_dim,
-                nhead=num_heads,
-                dim_feedforward=hidden_dim,
-                dropout=dropout
-            ),
-            num_layers=num_layers
-        )
-        
-        # Final Linear Layer
-        self.final_layer = nn.Linear(hidden_dim, output_channels)
-        
-    def calculate_positional_encoding(self, input_channels, image_size, hidden_dim):
-        position = torch.arange(0, image_size * image_size).unsqueeze(0)
-        div_term = torch.exp(torch.arange(0, hidden_dim, 2) * -(math.log(10000.0) / hidden_dim))
-        position_encoding = torch.zeros(1, image_size * image_size, hidden_dim)
-        position_encoding[:, :, 0::2] = torch.sin(position * div_term)
-        position_encoding[:, :, 1::2] = torch.cos(position * div_term)
-        position_encoding = position_encoding.view(1, input_channels, image_size, image_size, hidden_dim)
-        return position_encoding
-        
+class SelfAttention(nn.Module):
+    def __init__(self, in_channels):
+        super(SelfAttention, self).__init__()
+        self.query = nn.Conv2d(in_channels, in_channels // 8, kernel_size=1)
+        self.key = nn.Conv2d(in_channels, in_channels // 8, kernel_size=1)
+        self.value = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        self.gamma = nn.Parameter(torch.zeros(1))
+
     def forward(self, x):
-        # Add positional encoding
-        x = x + self.positional_encoding.to(x.device)
-        
-        # Transformer Encoder
-        x_encoded = self.transformer_encoder(x)
-        
-        # Upsampling
-        x_upsampled = self.upsample(x_encoded)
-        
-        # Transformer Decoder
-        enhanced_image = self.transformer_decoder(x_upsampled)
-        
-        # Final Linear Layer
-        enhanced_image = self.final_layer(enhanced_image)
-        
-        return enhanced_image
+        batch_size, channels, height, width = x.size()
+        query = self.query(x).view(batch_size, -1, height * width)
+        key = self.key(x).view(batch_size, -1, height * width)
+        value = self.value(x).view(batch_size, -1, height * width)
+
+        attention_map = torch.matmul(query.permute(0, 2, 1), key)
+        attention_map = torch.nn.functional.softmax(attention_map, dim=-1)
+
+        out = torch.matmul(attention_map, value.permute(0, 2, 1)).view(batch_size, channels, height, width)
+        out = self.gamma * out + x
+        return out
+
+
+class AttentionCNNImageEnhancementModel(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        super(AttentionCNNImageEnhancementModel, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(16),  # Add attention here
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(32),  # Add attention here
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(32),  # Add attention here
+        )
+        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.decoder = nn.Sequential(
+            nn.Conv2d(32, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(16),  # Add attention here
+            nn.Conv2d(16, output_channels, kernel_size=3, padding=1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        x = self.encoder(x)
+        x = self.upscale(x)
+        x = self.decoder(x)
+        return x
