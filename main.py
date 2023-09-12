@@ -7,8 +7,8 @@ from model import *
 import os
 
 def main():
-    train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
-    train_output_root_dir = 'data/DIV2K_train_HR/resized_100'
+    train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
+    train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
     test_input_root_dir = 'data/DIV2K_valid_HR/resized_4'
     test_output_root_dir = 'data/DIV2K_valid_HR/resized_2'
 
