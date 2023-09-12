@@ -108,3 +108,9 @@ class AttentionCNNImageEnhancementModel(nn.Module):
             nn.Sigmoid()
         )
 
+    def forward(self, x):
+        encoded = self.encoder(x)
+        upscaled = self.upscale(encoded)
+        decoded = self.decoder(upscaled)
+        return decoded
+
