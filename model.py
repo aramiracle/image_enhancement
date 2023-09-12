@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torchvision.transforms as T
-import torchvision.models as models
-
 
 # Define a CNN-based model for image enhancement
 class CNNImageEnhancementModel(nn.Module):
@@ -18,7 +16,7 @@ class CNNImageEnhancementModel(nn.Module):
             nn.Conv2d(256, 512, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU(),
+            nn.ReLU()
         )
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.decoder = nn.Sequential(
@@ -27,7 +25,7 @@ class CNNImageEnhancementModel(nn.Module):
             nn.Conv2d(256, 128, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(128, output_channels, kernel_size=3, padding=1),
-            nn.Sigmoid(),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -46,14 +44,14 @@ class SimpleCNNImageEnhancementModel(nn.Module):
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
+            nn.ReLU()
         )
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.decoder = nn.Sequential(
             nn.Conv2d(64, 32, kernel_size=3, padding=1),
             nn.ReLU(),
             nn.Conv2d(32, output_channels, kernel_size=3, padding=1),
-            nn.Sigmoid(),
+            nn.Sigmoid()
         )
 
     def forward(self, x):
@@ -84,4 +82,29 @@ class SelfAttention(nn.Module):
         out = self.gamma * out + x
         return out
 
-    
+class AttentionCNNImageEnhancementModel(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        super(AttentionCNNImageEnhancementModel, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(16),  # Add attention here
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(32),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(64)
+
+        )
+        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.decoder = nn.Sequential(
+            nn.Conv2d(64, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            SelfAttention(32),  # Add attention here
+            nn.Conv2d(32, 16, kernel_size=3, padding=1),
+            SelfAttention(16),  # Add attention here
+            nn.Conv2d(16, output_channels, kernel_size=3, padding=1),
+            nn.Sigmoid()
+        )
+
