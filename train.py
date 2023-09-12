@@ -89,6 +89,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, save_ev
             best_ssim = average_ssim
             best_model_path = os.path.join(model_save_dir, f'best_cnn_image_enhancement_model.pth')
             torch.save(model.state_dict(), best_model_path)
+            print('Best model is updated')
     
     # Save the final best model based on SSIM
     if best_model_path:

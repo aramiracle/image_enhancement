@@ -114,3 +114,59 @@ class SimpleAttentionCNNImageEnhancementModel(nn.Module):
         x = self.upscale(x)
         x = self.decoder(x)
         return x
+    
+    import torch.nn as nn
+
+import torch.nn as nn
+
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ResidualBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+    
+    def forward(self, x):
+        residual = x
+        out = self.conv1(x)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out += residual  # Add the residual connection
+        out = self.relu(out)
+        return out
+
+class ResidualOfResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ResidualOfResidualBlock, self).__init__()
+        self.residual1 = ResidualBlock(in_channels, out_channels)
+        self.residual2 = ResidualBlock(out_channels, out_channels)
+    
+    def forward(self, x):
+        out = self.residual1(x)
+        out = self.residual2(out)
+        out += x  # Add the input as a residual
+        return out
+
+class SimpleCNNImageEnhancementModel(nn.Module):
+    def __init__(self, input_channels, output_channels):
+        super(SimpleCNNImageEnhancementModel, self).__init__()
+        self.encoder = nn.Sequential(
+            nn.Conv2d(input_channels, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            ResidualOfResidualBlock(16, 32),
+            ResidualOfResidualBlock(32, 64),
+            ResidualOfResidualBlock(64, 64),
+        )
+        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.decoder = nn.Sequential(
+            ResidualOfResidualBlock(64, 32),
+            ResidualOfResidualBlock(32, 16),
+            nn.Conv2d(16, output_channels, kernel_size=3, padding=1),
+            nn.Sigmoid(),
+        )
+
+    def forward(self, x):
+        encoded = self.encoder(x)
+        upscaled = self.upscale(encoded)
+        decoded = self.decoder(upscaled)
+        return decoded

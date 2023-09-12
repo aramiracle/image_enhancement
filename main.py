@@ -16,7 +16,7 @@ def main():
     best_model_path = 'saved_models/'+ model_name +'/best_' + model_name + '_image_enhancement_model.pth'
 
     batch_size = 100
-    num_epochs = 100
+    num_epochs = 200
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     model_save_dir = 'saved_models/' + model_name
