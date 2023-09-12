@@ -9,7 +9,7 @@ from model import SimpleCNNImageEnhancementModel  # Import your custom model cla
 model_path = 'saved_models/simple_cnn/best_cnn_image_enhancement_model.pth'
 
 # Define the enhancement factor (log2(ratio))
-enhancement_factor = 3.0  # Set the enhancement factor
+enhancement_factor = 2.0  # Set the enhancement factor
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([
