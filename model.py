@@ -85,27 +85,27 @@ class SelfAttention(nn.Module):
         out = self.gamma * out + x
         return out
 
-
-class AttentionCNNImageEnhancementModel(nn.Module):
+    
+class SimpleAttentionCNNImageEnhancementModel(nn.Module):
     def __init__(self, input_channels, output_channels):
-        super(AttentionCNNImageEnhancementModel, self).__init__()
+        super(SimpleAttentionCNNImageEnhancementModel, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channels, 32, kernel_size=3, padding=1),
+            nn.Conv2d(input_channels, 8, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(32),  # Add attention here
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            SelfAttention(8),  # Add attention here
+            nn.Conv2d(8, 16, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(64),  # Add attention here
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
+            SelfAttention(16),  # Add attention here
+            nn.Conv2d(16, 16, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(64),  # Add attention here
+            SelfAttention(16),  # Add attention here
         )
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
         self.decoder = nn.Sequential(
-            nn.Conv2d(64, 32, kernel_size=3, padding=1),
+            nn.Conv2d(16, 8, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(32),  # Add attention here
-            nn.Conv2d(32, output_channels, kernel_size=3, padding=1),
+            SelfAttention(8),  # Add attention here
+            nn.Conv2d(8, output_channels, kernel_size=3, padding=1),
             nn.Sigmoid(),
         )
 
