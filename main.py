@@ -7,16 +7,16 @@ from model import *
 import os
 
 def main():
-    model_name = 'simple_cnn'
+    model_name = 'simple_attention'
     train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
     train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
-    test_input_root_dir = 'data/DIV2K_valid_HR/resized_4'
-    test_output_root_dir = 'data/DIV2K_valid_HR/resized_2'
+    test_input_root_dir = 'data/DIV2K_valid_HR/resized_16'
+    test_output_root_dir = 'data/DIV2K_valid_HR/resized_8'
 
     best_model_path = 'saved_models/'+ model_name +'/best_' + model_name + '_image_enhancement_model.pth'
 
     batch_size = 100
-    num_epochs = 200
+    num_epochs = 100
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     model_save_dir = 'saved_models/' + model_name
@@ -29,7 +29,7 @@ def main():
 
     train_loader, test_loader = get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir,test_output_root_dir, batch_size)
 
-    model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
+    model = SimpleAttentionCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 
     train_model(model, train_loader, num_epochs, device, model_save_dir)
 

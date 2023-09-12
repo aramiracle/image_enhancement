@@ -3,10 +3,10 @@ import torch
 import torchvision.transforms as transforms
 from PIL import Image
 import math
-from model import CNNImageEnhancementModel  # Import your custom model class
+from model import SimpleCNNImageEnhancementModel  # Import your custom model class
 
 # Define the path to the latest saved model
-model_path = 'saved_models/cnn/best_cnn_image_enhancement_model.pth'
+model_path = 'saved_models/simple_cnn/best_cnn_image_enhancement_model.pth'
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 3.0  # Set the enhancement factor
@@ -17,7 +17,7 @@ preprocess = transforms.Compose([
 ])
 
 # Load the latest saved model
-model = CNNImageEnhancementModel(input_channels=3, output_channels=3)
+model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3)
 model.load_state_dict(torch.load(model_path))
 model.eval()  # Set the model to evaluation mode (no gradient computation)
 
