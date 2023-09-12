@@ -6,6 +6,7 @@ import torchvision.transforms as T
 class CNNImageEnhancementModel(nn.Module):
     def __init__(self, input_channels, output_channels):
         super(CNNImageEnhancementModel, self).__init__()
+        # Encoder layers for feature extraction
         self.encoder = nn.Sequential(
             nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -18,7 +19,9 @@ class CNNImageEnhancementModel(nn.Module):
             nn.Conv2d(512, 512, kernel_size=3, padding=1),
             nn.ReLU()
         )
+        # Upsampling layer for image upscaling
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        # Decoder layers for image reconstruction
         self.decoder = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -29,15 +32,17 @@ class CNNImageEnhancementModel(nn.Module):
         )
 
     def forward(self, x):
+        # Forward pass through the model
         encoded = self.encoder(x)
         upscaled = self.upscale(encoded)
         decoded = self.decoder(upscaled)
         return decoded
-    
-    # Define a CNN-based model for image enhancement
+
+# Define a simpler CNN-based model for image enhancement
 class SimpleCNNImageEnhancementModel(nn.Module):
     def __init__(self, input_channels, output_channels):
         super(SimpleCNNImageEnhancementModel, self).__init__()
+        # Encoder layers for feature extraction
         self.encoder = nn.Sequential(
             nn.Conv2d(input_channels, 32, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -46,7 +51,9 @@ class SimpleCNNImageEnhancementModel(nn.Module):
             nn.Conv2d(64, 64, kernel_size=3, padding=1),
             nn.ReLU()
         )
+        # Upsampling layer for image upscaling
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        # Decoder layers for image reconstruction
         self.decoder = nn.Sequential(
             nn.Conv2d(64, 32, kernel_size=3, padding=1),
             nn.ReLU(),
@@ -55,12 +62,13 @@ class SimpleCNNImageEnhancementModel(nn.Module):
         )
 
     def forward(self, x):
+        # Forward pass through the model
         encoded = self.encoder(x)
         upscaled = self.upscale(encoded)
         decoded = self.decoder(upscaled)
         return decoded
 
-
+# Define a self-attention mechanism
 class SelfAttention(nn.Module):
     def __init__(self, in_channels):
         super(SelfAttention, self).__init__()
@@ -82,35 +90,38 @@ class SelfAttention(nn.Module):
         out = self.gamma * out + x
         return out
 
+# Define a CNN-based model for image enhancement with self-attention
 class AttentionCNNImageEnhancementModel(nn.Module):
     def __init__(self, input_channels, output_channels):
         super(AttentionCNNImageEnhancementModel, self).__init__()
+        # Encoder layers for feature extraction with self-attention
         self.encoder = nn.Sequential(
             nn.Conv2d(input_channels, 16, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(16),  # Add attention here
+            SelfAttention(16),  # Apply self-attention here
             nn.Conv2d(16, 32, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(32),
+            SelfAttention(32),  # Apply self-attention here
             nn.Conv2d(32, 64, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(64)
-
+            SelfAttention(64)  # Apply self-attention here
         )
+        # Upsampling layer for image upscaling
         self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        # Decoder layers for image reconstruction with self-attention
         self.decoder = nn.Sequential(
             nn.Conv2d(64, 32, kernel_size=3, padding=1),
             nn.ReLU(),
-            SelfAttention(32),  # Add attention here
+            SelfAttention(32),  # Apply self-attention here
             nn.Conv2d(32, 16, kernel_size=3, padding=1),
-            SelfAttention(16),  # Add attention here
+            SelfAttention(16),  # Apply self-attention here
             nn.Conv2d(16, output_channels, kernel_size=3, padding=1),
             nn.Sigmoid()
         )
 
     def forward(self, x):
+        # Forward pass through the model
         encoded = self.encoder(x)
         upscaled = self.upscale(encoded)
         decoded = self.decoder(upscaled)
         return decoded
-

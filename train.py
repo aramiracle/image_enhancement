@@ -3,35 +3,36 @@ import os
 import re
 from tqdm import tqdm
 import torch.nn as nn
-from skimage.metrics import structural_similarity as ssim  # Import SSIM from scikit-image
+from skimage.metrics import structural_similarity as ssim
 
+# Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
 class PSNRLoss(nn.Module):
     def __init__(self):
         super(PSNRLoss, self).__init__()
 
     def forward(self, prediction, target):
-        # Calculate MSE (Mean Squared Error)
+        # Calculate Mean Squared Error (MSE)
         mse = torch.mean((prediction - target) ** 2)
         
-        # Calculate PSNR
+        # Calculate PSNR (Peak Signal-to-Noise Ratio)
         psnr = -10 * torch.log10(mse)
         
-        # PSNR is typically used as a quality metric, so you want to minimize the negative PSNR
-        # Invert the sign to use it as a loss
+        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
         return -psnr
 
+# Calculate Structural Similarity Index (SSIM) between two images
 def calculate_ssim(prediction, target):
-    # Calculate SSIM
     ssim_value = ssim(target.cpu().numpy(), prediction.cpu().numpy(), data_range=1.0, channel_axis=1)
     return ssim_value
 
+# Extract the epoch number from a filename using regular expressions
 def extract_epoch_number(filename):
-    # Use regular expressions to extract the epoch number from the filename
     match = re.search(r"epoch(\d+)", filename)
     if match:
         return int(match.group(1))
     return 0  # Default to 0 if no match is found
 
+# Train a deep learning model
 def train_model(model, train_loader, num_epochs, device, model_save_dir, save_every=5):
     criterion_psnr = PSNRLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

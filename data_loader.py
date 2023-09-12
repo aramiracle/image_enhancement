@@ -5,9 +5,18 @@ import os
 import random
 import torch
 
-
+# Define a custom dataset class for image enhancement tasks.
 class ImageEnhancementDataset(Dataset):
     def __init__(self, input_root_dir, output_root_dir, transform=None, train=True):
+        """
+        Initialize the ImageEnhancementDataset.
+
+        Args:
+            input_root_dir (str): Path to the directory containing input images.
+            output_root_dir (str): Path to the directory containing output (target) images.
+            transform (callable, optional): Optional image transformations to apply.
+            train (bool, optional): Set to True for training data; applies data augmentation.
+        """
         self.input_root_dir = input_root_dir
         self.output_root_dir = output_root_dir
         self.transform = transform
@@ -18,9 +27,21 @@ class ImageEnhancementDataset(Dataset):
         self.output_image_paths = [os.path.join(output_root_dir, fname) for fname in sorted(os.listdir(output_root_dir))]
 
     def __len__(self):
+        """Return the number of samples in the dataset."""
         return len(self.input_image_paths)
 
     def apply_data_augmentation(self, input_image, output_image):
+        """
+        Apply data augmentation to input and output images.
+
+        Args:
+            input_image (PIL.Image): Input image.
+            output_image (PIL.Image): Output (target) image.
+
+        Returns:
+            PIL.Image: Augmented input image.
+            PIL.Image: Augmented output (target) image.
+        """
         if self.train:
             # Random rotation
             angle = random.randint(-45, 45)
@@ -44,6 +65,16 @@ class ImageEnhancementDataset(Dataset):
         return input_image, output_image
 
     def __getitem__(self, idx):
+        """
+        Get an item from the dataset by index.
+
+        Args:
+            idx (int): Index of the item to retrieve.
+
+        Returns:
+            PIL.Image: Augmented input image.
+            PIL.Image: Augmented output (target) image.
+        """
         input_img_path = self.input_image_paths[idx]
         output_img_path = self.output_image_paths[idx]
 
@@ -59,6 +90,20 @@ class ImageEnhancementDataset(Dataset):
         return input_image, output_image
 
 def get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, test_output_root_dir, batch_size):
+    """
+    Create data loaders for training and testing datasets.
+
+    Args:
+        train_input_root_dir (str): Path to the directory containing training input images.
+        train_output_root_dir (str): Path to the directory containing training output images.
+        test_input_root_dir (str): Path to the directory containing testing input images.
+        test_output_root_dir (str): Path to the directory containing testing output images.
+        batch_size (int): Batch size for data loaders.
+
+    Returns:
+        DataLoader: Training data loader.
+        DataLoader: Testing data loader.
+    """
     transform = transforms.Compose([transforms.ToTensor()])
 
     train_dataset = ImageEnhancementDataset(train_input_root_dir, train_output_root_dir, transform=transform, train=True)

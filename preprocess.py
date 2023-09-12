@@ -17,6 +17,19 @@ target_sizes = [25, 50, 100, 200, 400]
 fractions = [1/4, 1/8, 1/16, 1/32]
 
 def resize_and_save_images(image_file, input_folder, output_folder, target_size=None, fraction=None):
+    """
+    Resize and save an image using PIL.
+
+    Args:
+        image_file (str): The name of the input image file.
+        input_folder (str): The folder containing the input image.
+        output_folder (str): The folder where the resized image will be saved.
+        target_size (int, optional): The desired size for the image (square).
+        fraction (float, optional): The fraction by which to scale the image dimensions.
+
+    Returns:
+        None
+    """
     # Load the image using PIL
     image_path = os.path.join(input_folder, image_file)
     image = Image.open(image_path)
@@ -38,7 +51,7 @@ def resize_and_save_images(image_file, input_folder, output_folder, target_size=
 
 if __name__ == "__main__":
     # Create a pool of worker processes
-    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())  # Use the number of CPU cores
+    pool = multiprocessing.Pool(processes=multiprocessing.cpu_count())  # Utilize all available CPU cores
 
     # Process the training dataset and save in 'data/DIV2K_train_HR'
     for target_size in target_sizes:

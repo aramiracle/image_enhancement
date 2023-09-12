@@ -13,7 +13,7 @@ enhancement_factor = 2.0  # Set the enhancement factor
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([
-    transforms.ToTensor()  # Convert to a PyTorch tensor
+    transforms.ToTensor()  # Convert images to PyTorch tensors
 ])
 
 # Load the latest saved model
@@ -39,13 +39,13 @@ for input_file in input_files:
     # Construct the full path of the input GIF
     input_gif_path = os.path.join(input_directory, input_file)
 
-    # Load the input GIF
-    input_gif = imageio.mimread(input_gif_path)
+    # Load the input GIF frames
+    input_gif_frames = imageio.mimread(input_gif_path)
 
     enhanced_frames = []
 
     # Loop through each frame in the GIF
-    for frame in input_gif:
+    for frame in input_gif_frames:
         # Convert the frame to a PyTorch tensor
         frame_tensor = transforms.ToTensor()(frame)
         frame_tensor = frame_tensor.unsqueeze(0)  # Add a batch dimension
@@ -53,10 +53,10 @@ for input_file in input_files:
         # Perform image enhancement in multiple iterations
         with torch.no_grad():
             for _ in range(num_iterations):
-                # Enhance the entire frame
+                # Enhance the entire frame using the loaded model
                 frame_tensor = model(frame_tensor)
 
-        # Calculate the final resize factor
+        # Calculate the final resize factor for the enhanced frame
         final_resize_factor = enhancement_factor / (2 ** num_iterations)
 
         # Calculate the target dimensions based on the dimensions of frame_tensor
@@ -68,7 +68,7 @@ for input_file in input_files:
 
         # Convert the resized output back to a NumPy array (image)
         enhanced_frame = transforms.ToPILImage()(enhanced_frame)
-    
+
         # Append the enhanced frame to the list
         enhanced_frames.append(enhanced_frame)
 

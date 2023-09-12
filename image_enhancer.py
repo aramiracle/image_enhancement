@@ -9,11 +9,11 @@ from model import SimpleCNNImageEnhancementModel  # Import your custom model cla
 model_path = 'saved_models/simple_cnn/best_cnn_image_enhancement_model.pth'
 
 # Define the enhancement factor (log2(ratio))
-enhancement_factor = 2.0  # Set the enhancement factor
+enhancement_factor = 2.0  # Set the desired enhancement factor
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([
-    transforms.ToTensor()  # Convert to a PyTorch tensor
+    transforms.ToTensor()  # Convert the input image to a PyTorch tensor
 ])
 
 # Load the latest saved model
@@ -47,7 +47,7 @@ for input_file in input_files:
     # Perform image enhancement in multiple iterations
     with torch.no_grad():
         for _ in range(num_iterations):
-            # Enhance the entire input image
+            # Apply enhancement to the entire input image
             input_batch = model(input_batch)
 
     # Calculate the final resize factor
