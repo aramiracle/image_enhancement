@@ -2,37 +2,10 @@
 import torch
 import os
 import re
-import math
 from tqdm import tqdm
-import torch.nn as nn
 from torchmetrics.image import StructuralSimilarityIndexMeasure, VisualInformationFidelity, PeakSignalNoiseRatio
+from loss_functions import *
 
-
-# Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
-class PSNRLoss(nn.Module):
-    def __init__(self):
-        super(PSNRLoss, self).__init__()
-
-    def forward(self, prediction, target):
-        psnr = PeakSignalNoiseRatio()
-        psnr_value = psnr(prediction, target)
-        
-        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
-        return -psnr_value
-    
-class TangentSSIMLoss(nn.Module):
-    def __init__(self):
-        super(TangentSSIMLoss, self).__init__()
-
-    def forward(self, prediction, target):
-        # Calculate Structural Similarity Index (SSIM)
-        ssim = StructuralSimilarityIndexMeasure(data_range=1)
-        ssim_value = ssim(prediction, target)
-
-        # Calculate a function which maps [0,1] to (inf, -inf)
-        loss = -torch.tan(math.pi * (ssim_value - 0.5))
-
-        return loss
 
 # Extract the epoch number from a filename using regular expressions
 def extract_epoch_number(filename):
@@ -47,8 +20,10 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
         criterion = PSNRLoss()
     elif criterion_str == 'SSIM':
         criterion = TangentSSIMLoss()
+    elif criterion_str == 'SSIM_PSNR':
+        criterion = SSIM_PSNRLoss()
     else:
-        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR', 'SSIM'.")
+        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR','SSIM', 'SSIM_PSNR'.")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -64,7 +39,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
         model.load_state_dict(torch.load(os.path.join(model_save_dir, latest_model)))
         print(f"Loaded model from epoch {latest_epoch}")
 
-    best_metric = -float('inf')  # Initialize with negative infinity
+    best_loss = float('inf')  # Initialize with negative infinity
     best_model_path = None
 
     # Initialize the VIF metric
@@ -118,14 +93,9 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
             torch.save(model.state_dict(), model_save_path)
             print(f"Model saved at epoch {epoch+1} to {model_save_path}")
 
-        # Check if the metric is better than the current best
-        if criterion_str == 'PSNR':
-            current_metric = average_psnr
-        elif criterion_str == 'SSIM':
-            current_metric = average_ssim
-
-        if current_metric > best_metric:
-            best_metric = current_metric
+        # Save the best model according to loss
+        if average_loss < best_loss:
+            best_loss = average_loss
             best_model_path = os.path.join(model_save_dir, f'best_cnn_image_enhancement_model.pth')
             torch.save(model.state_dict(), best_model_path)
             print(f'Best model is updated based on {criterion_str}')
