@@ -7,6 +7,7 @@ from tqdm import tqdm
 import torch.nn as nn
 from torchmetrics.image import StructuralSimilarityIndexMeasure, VisualInformationFidelity, PeakSignalNoiseRatio
 
+
 # Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
 class PSNRLoss(nn.Module):
     def __init__(self):
@@ -32,7 +33,6 @@ class TangentSSIMLoss(nn.Module):
         loss = -torch.tan(math.pi * (ssim_value - 0.5))
 
         return loss
-    
 
 # Extract the epoch number from a filename using regular expressions
 def extract_epoch_number(filename):
@@ -48,7 +48,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
     elif criterion_str == 'SSIM':
         criterion = TangentSSIMLoss()
     else:
-        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR' and 'SSIM'.")
+        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR', 'SSIM'.")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
@@ -77,7 +77,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
         running_loss = 0.0
         running_psnr = 0.0
         running_ssim = 0.0
-        running_vif = 0.0  # Initialize VIF accumulator
+        running_vif = 0.0
         
         for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{num_epochs}", ncols=100):
             input_batch, output_batch = batch
@@ -108,7 +108,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
         average_loss = running_loss / len(train_loader)
         average_psnr = running_psnr / len(train_loader)
         average_ssim = running_ssim / len(train_loader)
-        average_vif = running_vif / len(train_loader)  # Calculate the average VIF
+        average_vif = running_vif / len(train_loader)
         
         print(f"Epoch {epoch+1}/{num_epochs} - Loss: {average_loss:.4f}, PSNR: {average_psnr:.4f}, SSIM: {average_ssim:.4f}, VIF: {average_vif:.4f}")
 
