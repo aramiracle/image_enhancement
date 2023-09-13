@@ -21,7 +21,7 @@ def main():
 
     # Define hyperparameters.
     batch_size = 100
-    num_epochs = 200
+    num_epochs = 1004
 
     # Determine the computing device (GPU or CPU) available for training.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,7 +43,7 @@ def main():
     model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 
     # Train the model.
-    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='VIF')
+    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='PSNR')
 
     # Test the model and save the best performing model.
     test_model(model, test_loader, device, test_output_dir, best_model_path)

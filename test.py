@@ -53,9 +53,9 @@ def test_model(model, test_loader, device, test_output_dir, model_checkpoint_pat
             save_image(outputs.squeeze(0), filename)
 
     # Compute the mean PSNR and SSIM scores for the entire dataset
-    mean_psnr = torch.mean(psnr_scores)
-    mean_ssim = torch.mean(ssim_scores)
-    mean_vif = torch.mean(vif_scores)
+    mean_psnr = np.mean(psnr_scores)
+    mean_ssim = np.mean(ssim_scores)
+    mean_vif = np.mean(vif_scores)
 
     # Print the mean scores
     print(f"Mean PSNR between enhanced images and real ones: {mean_psnr:.4f}")
