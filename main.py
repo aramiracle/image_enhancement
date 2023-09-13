@@ -8,7 +8,7 @@ import os
 
 def main():
     # Define the name of the model being used.
-    model_name = 'simple_cnn_vif'
+    model_name = 'simple_cnn'
 
     # Define the directories for training and testing data.
     train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
