@@ -22,8 +22,10 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
         criterion = TangentSSIMLoss()
     elif criterion_str == 'SSIM_PSNR':
         criterion = SSIM_PSNRLoss()
+    elif criterion_str == 'NormalizeNorm1':
+        criterion = NormalizeNorm1Loss()
     else:
-        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR','SSIM', 'SSIM_PSNR'.")
+        raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR','SSIM', 'SSIM_PSNR' and 'NormalizeNorm1'.")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 

@@ -51,3 +51,14 @@ class SSIM_PSNRLoss(nn.Module):
         
         # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
         return loss
+    
+class NormalizeNorm1Loss(nn.Module):
+    def __init__(self):
+        super(NormalizeNorm1Loss, self).__init__()
+
+    def forward(self, prediction, target):
+        max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
+        norm1 = torch.absolute(prediction - target)
+        loss = torch.mean(torch.mul(norm1, max.pow(-1)))
+
+        return torch.log10(loss)*10

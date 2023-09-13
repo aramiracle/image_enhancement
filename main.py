@@ -8,11 +8,11 @@ import os
 
 def main():
     # Define the name of the model being used.
-    model_name = 'simple_cnn_ssim_psnr'
+    model_name = 'simple_cnn_normalize'
 
     # Define the directories for training and testing data.
-    train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
-    train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
+    train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
+    train_output_root_dir = 'data/DIV2K_train_HR/resized_100'
     test_input_root_dir = 'data/DIV2K_valid_HR/resized_8'
     test_output_root_dir = 'data/DIV2K_valid_HR/resized_4'
 
@@ -43,7 +43,7 @@ def main():
     model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 
     # Train the model.
-    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='SSIM_PSNR')
+    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='NormalizeNorm1')
 
     # Test the model and save the best performing model.
     test_model(model, test_loader, device, test_output_dir, best_model_path)
