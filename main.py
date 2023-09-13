@@ -8,20 +8,20 @@ import os
 
 def main():
     # Define the name of the model being used.
-    model_name = 'attention'
+    model_name = 'simple_cnn'
 
     # Define the directories for training and testing data.
-    train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
-    train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
-    test_input_root_dir = 'data/DIV2K_valid_HR/resized_16'
-    test_output_root_dir = 'data/DIV2K_valid_HR/resized_8'
+    train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
+    train_output_root_dir = 'data/DIV2K_train_HR/resized_100'
+    test_input_root_dir = 'data/DIV2K_valid_HR/resized_8'
+    test_output_root_dir = 'data/DIV2K_valid_HR/resized_4'
 
     # Define the path to save the best trained model.
-    best_model_path = 'saved_models/'+ model_name +'/best_' + model_name + '_image_enhancement_model.pth'
+    best_model_path = 'saved_models/'+ model_name +'/befgdgdst_cnn_image_enhancement_model.pth'
 
     # Define hyperparameters.
     batch_size = 100
-    num_epochs = 200
+    num_epochs = 1003
 
     # Determine the computing device (GPU or CPU) available for training.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -40,10 +40,10 @@ def main():
     train_loader, test_loader = get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_root_dir, test_output_root_dir, batch_size)
 
     # Initialize the model architecture.
-    model = AttentionCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
+    model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 
     # Train the model.
-    train_model(model, train_loader, num_epochs, device, model_save_dir)
+    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='PSNR')
 
     # Test the model and save the best performing model.
     test_model(model, test_loader, device, test_output_dir, best_model_path)

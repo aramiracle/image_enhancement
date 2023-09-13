@@ -58,7 +58,7 @@ class ImageEnhancementDataset(Dataset):
                 input_image = transforms.GaussianBlur(5, 0.5)(input_image)
             if random.random() < 0.3:
                 input_image = transforms.ToTensor()(input_image)
-                noise = torch.randn_like(input_image) * 0.001 + 0
+                noise = torch.randn_like(input_image) * 0.002 + 0
                 input_image = input_image + noise
                 input_image = transforms.ToPILImage()(input_image)
 
