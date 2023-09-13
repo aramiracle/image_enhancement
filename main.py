@@ -8,7 +8,7 @@ import os
 
 def main():
     # Define the name of the model being used.
-    model_name = 'simple_cnn_normalize'
+    model_name = 'simple_cnn_ssim_psnr'
 
     # Define the directories for training and testing data.
     train_input_root_dir = 'data/DIV2K_train_HR/resized_50'
@@ -21,7 +21,7 @@ def main():
 
     # Define hyperparameters.
     batch_size = 100
-    num_epochs = 200
+    num_epochs = 500
 
     # Determine the computing device (GPU or CPU) available for training.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -43,7 +43,7 @@ def main():
     model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3).to(device)
 
     # Train the model.
-    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='NormalizeNorm1')
+    train_model(model, train_loader, num_epochs, device, model_save_dir, criterion_str='SSIM_PSNR')
 
     # Test the model and save the best performing model.
     test_model(model, test_loader, device, test_output_dir, best_model_path)
