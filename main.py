@@ -24,7 +24,7 @@ def main():
 
     # Define hyperparameters.
     batch_size = 25
-    num_epochs = 100
+    num_epochs = 1000
 
     # Determine the computing device (GPU or CPU) available for training.
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
