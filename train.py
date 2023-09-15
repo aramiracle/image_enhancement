@@ -32,7 +32,7 @@ def train_model(model, train_loader, num_epochs, device, model_save_dir, criteri
     elif criterion_str == 'LNL1':
         criterion = LNL1Loss()
     elif criterion_str == 'SSIM_PSNR_LNL1':
-        criterion = PSNRLoss() + 20 * TangentSSIMLoss() + 2 * LNL1Loss()
+        criterion = PSNR_SSIM_LNL1Loss(1, 20, 2)
     else:
         raise ValueError("Unsupported loss criterion. Supported criteria are 'PSNR','SSIM', 'SSIM_PSNR' and 'SSIM_PSNR_NL1'.")
 
