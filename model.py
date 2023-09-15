@@ -125,3 +125,27 @@ class AttentionCNNImageEnhancementModel(nn.Module):
         upscaled = self.upscale(encoded)
         decoded = self.decoder(upscaled)
         return decoded
+
+class SimpleGenerator(nn.Module):
+    def __init__(self):
+        super(SimpleGenerator, self).__init__()
+
+        self.model = nn.Sequential(
+            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
+            nn.ReLU(inplace=True),
+
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),  # Upsample by 2x
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),  # Additional convolution
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
+            nn.Tanh()
+        )
+
+    def forward(self, x):
+        return self.model(x)

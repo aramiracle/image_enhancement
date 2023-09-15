@@ -2,11 +2,11 @@ import os
 import torch
 import torchvision.transforms as transforms
 import math
-from model import SimpleCNNImageEnhancementModel  # Import your custom model class
+from model import SimpleGenerator  # Import your custom model class
 import imageio
 
 # Define the path to the latest saved model
-model_path = "saved_models/simple_cnn_ssim_psnr/best_cnn_image_enhancement_model.pth"
+model_path = "saved_models/simple_generator/best_cnn_image_enhancement_model.pth"
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 2.0  # Set the enhancement factor
@@ -17,7 +17,7 @@ preprocess = transforms.Compose([
 ])
 
 # Load the latest saved model
-model = SimpleCNNImageEnhancementModel(input_channels=3, output_channels=3)
+model = SimpleGenerator()
 model.load_state_dict(torch.load(model_path))
 model.eval()  # Set the model to evaluation mode (no gradient computation)
 

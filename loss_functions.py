@@ -27,38 +27,23 @@ class TangentSSIMLoss(nn.Module):
         ssim_value = ssim(prediction, target)
 
         # Calculate a function which maps [0,1] to (inf, -inf)
-        loss = -torch.tan(math.pi * (ssim_value - 0.5))
+        loss = torch.tan(math.pi / 2 * (1 - ssim_value))
 
         return loss
 
 # Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
-class SSIM_PSNRLoss(nn.Module):
+class LNL1Loss(nn.Module):
     def __init__(self):
-        super(SSIM_PSNRLoss, self).__init__()
-
-    def forward(self, prediction, target):
-        psnr = PeakSignalNoiseRatio()
-        psnr_value = psnr(prediction, target)
-        
-        # Calculate Structural Similarity Index (SSIM)
-        ssim = StructuralSimilarityIndexMeasure(data_range=1)
-        ssim_value = ssim(prediction, target)
-
-        # Calculate a function which maps [0,1] to (inf, -inf)
-        ssim_loss = torch.tan(math.pi / 2 * (1 - ssim_value))
-
-        loss = -psnr_value + ssim_loss*40
-        
-        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
-        return loss
-    
-class NormalizeNorm1Loss(nn.Module):
-    def __init__(self):
-        super(NormalizeNorm1Loss, self).__init__()
+        super(LNL1Loss, self).__init__()
 
     def forward(self, prediction, target):
         max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
         norm1 = torch.absolute(prediction - target)
-        loss = torch.mean(torch.mul(norm1, max.pow(-1)))
+        normalize_norm1 = torch.mean(torch.mul(norm1, max.pow(-1)))
+        lnl1_value = -10*torch.log10(normalize_norm1)
 
-        return torch.log10(loss)*10
+        loss = -lnl1_value
+        
+        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
+        return loss
+    

@@ -44,7 +44,7 @@ class ImageEnhancementDataset(Dataset):
         """
         if self.train:
             # Random rotation
-            angle = random.randint(-45, 45)
+            angle = random.randint(-30, 30)
             input_image = input_image.rotate(angle)
             output_image = output_image.rotate(angle)
 
