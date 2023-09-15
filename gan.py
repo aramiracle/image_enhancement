@@ -21,7 +21,7 @@ def lnl1_metric(prediction, target):
 
     return lnl1_value
 
-def PSNR_SSIM_loss(prediction, target):
+def PSNR_SSIM_LNL1_loss(prediction, target):
     psnr = PeakSignalNoiseRatio()
     psnr_value = psnr(prediction, target)
     psnr_loss = -psnr_value
@@ -33,7 +33,9 @@ def PSNR_SSIM_loss(prediction, target):
     # Calculate a function which maps [0,1] to (inf, 0]
     ssim_loss = torch.tan(math.pi / 2 * (1 - ssim_value))
 
-    return psnr_loss + 20 * ssim_loss
+    lnl1_loss = -lnl1_metric(prediction, target)
+
+    return psnr_loss + 20 * ssim_loss + 2 * lnl1_loss
 
 train_input_root_dir = 'data/DIV2K_train_HR/resized_25'
 train_output_root_dir = 'data/DIV2K_train_HR/resized_50'
@@ -43,7 +45,7 @@ test_output_root_dir = 'data/DIV2K_valid_HR/resized_4'
 # Define hyperparameters
 batch_size = 50
 learning_rate = 0.0005
-epochs = 200
+epochs = 1000
 
 # Initialize the generator and discriminator
 generator = SimplerGenerator()
@@ -169,7 +171,7 @@ for epoch in range(epoch, epochs):
         bce_loss = criterion(output_fake, real_labels)  # BCELoss for generator
         
         # Calculating custom loss
-        custom_loss = PSNR_SSIM_loss(fake_images, real_images_output)
+        custom_loss = PSNR_SSIM_LNL1_loss(fake_images, real_images_output)
         
         # Combine BCELoss and CustomLoss for the generator
         loss_generator = bce_loss + custom_loss
@@ -206,7 +208,7 @@ for epoch in range(epoch, epochs):
         torch.save({
             'generator_state_dict': generator.state_dict()
         }, save_path)
-        print('Best model is saved according to SSIM.')
+        print('$$$ Best model is saved according to SSIM. $$$')
 
 # Testing loop with tqdm
 gan_images_dir = 'results/gan'

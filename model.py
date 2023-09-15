@@ -160,10 +160,16 @@ class SimplerGenerator(nn.Module):
             nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
 
-            nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),  # Upsample by 2x
+            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(inplace=True),
 
-            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),  # Additional convolution
+            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),  # Upsample by 2x
+            nn.ReLU(inplace=True),
+
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),  # Additional convolution
+            nn.ReLU(inplace=True),
+            
+            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
             nn.Tanh()
         )
 
@@ -185,7 +191,7 @@ class SimplerDiscriminator(nn.Module):
 
             nn.Flatten(),
             nn.Linear(32 * 25 * 25, 1),  # Fully connected layer to output a single scalar
-            nn.Dropout(0.5),
+            nn.Dropout(0.3),
             nn.Sigmoid()  # Sigmoid activation to squash the output to [0, 1]
         )
 

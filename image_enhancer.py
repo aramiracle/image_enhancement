@@ -9,7 +9,7 @@ from model import SimplerGenerator  # Import your custom model class
 model_path = 'saved_models/gan/best_gan_checkpoint.pth'
 
 # Define the enhancement factor (log2(ratio))
-enhancement_factor = 3.0  # Set the desired enhancement factor
+enhancement_factor = 2.0  # Set the desired enhancement factor
 
 # Create a transform to preprocess the input image
 preprocess = transforms.Compose([
