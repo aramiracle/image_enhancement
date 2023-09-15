@@ -3,3 +3,4 @@ example.py
 results/
 __pycache__/
 .idea/
+generated_images/

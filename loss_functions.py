@@ -64,7 +64,7 @@ class PSNR_SSIM_LNL1Loss(nn.Module):
         ssim = StructuralSimilarityIndexMeasure(data_range=1)
         ssim_value = ssim(prediction, target)
 
-        # Calculate a function which maps [0,1] to (inf, -inf)
+        # Calculate a function which maps [0,1] to (inf, 0]
         ssim_loss = torch.tan(math.pi / 2 * (1 - ssim_value))
         
         max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
