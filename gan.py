@@ -217,6 +217,7 @@ os.makedirs(gan_images_dir, exist_ok=True)
 running_psnr = 0.0
 running_ssim = 0.0
 running_vif = 0.0
+running_lnl1 = 0.0
 
 best_checkpoint_path = 'saved_models/gan/best_gan_checkpoint.pth'
 checkpoint = torch.load(best_checkpoint_path)
@@ -244,7 +245,7 @@ with torch.no_grad():
 
         # Calculate LNL1 for this batch and accumulate
         lnl1_value = lnl1_metric(fake_image, real_image_output)
-        running_vif += vif_value
+        running_lnl1 += lnl1_value
 
         # You can save or visualize the generated images as needed
         fake_image = transforms.ToPILImage()(fake_image.squeeze().cpu())

@@ -191,7 +191,6 @@ class SimplerDiscriminator(nn.Module):
 
             nn.Flatten(),
             nn.Linear(32 * 25 * 25, 1),  # Fully connected layer to output a single scalar
-            nn.Dropout(0.3),
             nn.Sigmoid()  # Sigmoid activation to squash the output to [0, 1]
         )
 
