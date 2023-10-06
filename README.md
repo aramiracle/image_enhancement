@@ -138,6 +138,3 @@ Enhanced images and evaluation metrics in the `results/` directory.
 - Dataset structure follows DIV2K dataset format.
 
 Feel free to customize and extend this project for your image enhancement tasks.
-
-Feel free to customize and extend this project for your image enhancement tasks.
-
