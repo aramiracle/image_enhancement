@@ -1,3 +1,4 @@
+from typing import Tuple, Union
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 from PIL import Image
@@ -22,7 +23,7 @@ class ImageEnhancementDataset(Dataset):
         self.transform = transform
         self.train = train
 
-        # List all input and output image file paths
+        # List all input and output image file paths.
         self.input_image_paths = [os.path.join(input_root_dir, fname) for fname in sorted(os.listdir(input_root_dir))]
         self.output_image_paths = [os.path.join(output_root_dir, fname) for fname in sorted(os.listdir(output_root_dir))]
 
@@ -30,7 +31,7 @@ class ImageEnhancementDataset(Dataset):
         """Return the number of samples in the dataset."""
         return len(self.input_image_paths)
 
-    def apply_data_augmentation(self, input_image, output_image):
+    def apply_data_augmentation(self, input_image, output_image, seed):
         """
         Apply data augmentation to input and output images.
 
@@ -43,23 +44,27 @@ class ImageEnhancementDataset(Dataset):
             PIL.Image: Augmented output (target) image.
         """
         if self.train:
-            # Random rotation
+            # Random rotation.
             angle = random.randint(-30, 30)
             input_image = input_image.rotate(angle)
             output_image = output_image.rotate(angle)
 
-            # Color Jitter
-            color_jitter = transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1)
+            # Color Jitter.
+            color_jitter = MyColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1, seed=seed)
             input_image = color_jitter(input_image)
             output_image = color_jitter(output_image)
 
-            # Gaussian blur and noise
-            if random.random() < 0.3:
-                input_image = transforms.GaussianBlur(5, 0.5)(input_image)
+            # Grayscale.
+            random_grayscale = MyRandomGrayscale(p=0.1, seed=seed)
+            input_image = random_grayscale(input_image)
+            output_image = random_grayscale(output_image)
+
+            # Gaussian blur and noise.
             if random.random() < 0.3:
                 input_image = transforms.ToTensor()(input_image)
-                noise = torch.randn_like(input_image) * 0.002 + 0
-                input_image = input_image + noise
+                noise = torch.randn_like(input_image)
+                mask = noise < 0.5
+                input_image = torch.mul(input_image, mask) + torch.mul(noise, ~mask)
                 input_image = transforms.ToPILImage()(input_image)
 
         return input_image, output_image
@@ -80,8 +85,7 @@ class ImageEnhancementDataset(Dataset):
 
         input_image = Image.open(input_img_path).convert('RGB')
         output_image = Image.open(output_img_path).convert('RGB')
-
-        input_image, output_image = self.apply_data_augmentation(input_image, output_image)
+        input_image, output_image = self.apply_data_augmentation(input_image, output_image, idx)
 
         if self.transform:
             input_image = self.transform(input_image)
@@ -113,3 +117,23 @@ def get_data_loaders(train_input_root_dir, train_output_root_dir, test_input_roo
     test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
     return train_loader, test_loader
+
+class MyColorJitter(transforms.ColorJitter):
+    def __init__(self, brightness, contrast, saturation, hue, seed):
+        super().__init__(brightness, contrast, saturation, hue)
+        self.seed = seed
+
+    def forward(self, img):
+        torch.manual_seed(self.seed)
+        random.seed(self.seed)
+        return super().forward(img)
+    
+class MyRandomGrayscale(transforms.RandomGrayscale):
+    def __init__(self, p, seed):
+        super().__init__(p)
+        self.seed = seed
+
+    def forward(self, img):
+        torch.manual_seed(self.seed)
+        random.seed(self.seed)
+        return super().forward(img)

@@ -3,10 +3,10 @@ import torch
 import torchvision.transforms as transforms
 from PIL import Image
 import math
-from model import SimplerGenerator  # Import your custom model class
+from model import Generator  # Import your custom model class
 
 # Define the path to the latest saved model
-model_path = 'saved_models/gan/best_gan_checkpoint.pth'
+model_path = 'saved_models/simple_residual_ssim_psnr_lnl1/best_cnn_image_enhancement_model.pth'
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 2.0  # Set the desired enhancement factor
@@ -17,8 +17,8 @@ preprocess = transforms.Compose([
 ])
 
 # Load the latest saved model
-model = SimplerGenerator()
-model.load_state_dict(torch.load(model_path)['generator_state_dict'])
+model = Generator()
+model.load_state_dict(torch.load(model_path))
 model.eval()  # Set the model to evaluation mode (no gradient computation)
 
 # Define the paths for input and output directories

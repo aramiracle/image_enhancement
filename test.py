@@ -23,7 +23,6 @@ def test_model(model, test_loader, device, test_output_dir, model_checkpoint_pat
     if not os.path.exists(test_output_dir):
         os.mkdir(test_output_dir)
 
-
     # Set metrics
     psnr = PeakSignalNoiseRatio()
     ssim = StructuralSimilarityIndexMeasure(data_range=1)
@@ -38,11 +37,10 @@ def test_model(model, test_loader, device, test_output_dir, model_checkpoint_pat
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
 
-
             # Calculate PSNR and SSIM for this sample
             psnr_value = psnr(targets, outputs)
             ssim_value = ssim(targets, outputs)
-            vif_value = vif(targets,outputs)
+            vif_value = vif(targets, outputs)
 
             psnr_scores.append(psnr_value)
             ssim_scores.append(ssim_value)
@@ -61,4 +59,3 @@ def test_model(model, test_loader, device, test_output_dir, model_checkpoint_pat
     print(f"Mean PSNR between enhanced images and real ones: {mean_psnr:.4f}")
     print(f"Mean SSIM between enhanced images and real ones: {mean_ssim:.4f}")
     print(f"Mean VIF between enhanced images and real ones: {mean_vif:.4f}")
-    

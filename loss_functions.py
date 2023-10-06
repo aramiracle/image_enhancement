@@ -3,77 +3,77 @@ import torch
 import torch.nn as nn
 from torchmetrics.image import StructuralSimilarityIndexMeasure, PeakSignalNoiseRatio
 
-
-# Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
+# Custom loss function for Peak Signal-to-Noise Ratio (PSNR)
 class PSNRLoss(nn.Module):
     def __init__(self):
         super(PSNRLoss, self).__init__()
 
     def forward(self, prediction, target):
+        # Calculate PSNR using the PeakSignalNoiseRatio metric
         psnr = PeakSignalNoiseRatio()
         psnr_value = psnr(prediction, target)
         
-        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
+        # Negate PSNR to use it as a loss (lower PSNR is worse)
         return -psnr_value
 
-# Define a custom loss function for SSIM that maps [0, 1] to (inf, -inf)
+# Custom loss function for Structural Similarity Index (SSIM) with tangent mapping
 class TangentSSIMLoss(nn.Module):
     def __init__(self):
         super(TangentSSIMLoss, self).__init__()
 
     def forward(self, prediction, target):
-        # Calculate Structural Similarity Index (SSIM)
+        # Calculate SSIM using the StructuralSimilarityIndexMeasure metric
         ssim = StructuralSimilarityIndexMeasure(data_range=1)
         ssim_value = ssim(prediction, target)
 
-        # Calculate a function which maps [0,1] to (inf, -inf)
-        loss = torch.tan(math.pi / 2 * (1 - ssim_value))
-
+        # Map SSIM to (-inf, 0] using a tangent function
+        loss = torch.tan(math.pi / 2 * (1 - (1 + ssim_value)/2))
         return loss
 
-# Define a custom loss function for Peak Signal-to-Noise Ratio (PSNR)
+# Custom loss function for Logarithmic Normalized L1 (LNL1) loss
 class LNL1Loss(nn.Module):
     def __init__(self):
         super(LNL1Loss, self).__init__()
 
     def forward(self, prediction, target):
-        max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
-        norm1 = torch.absolute(prediction - target)
-        normalize_norm1 = torch.mean(torch.mul(norm1, max.pow(-1)))
-        lnl1_value = -10*torch.log10(normalize_norm1)
+        # Calculate element-wise absolute difference between prediction and target
+        norm1 = torch.abs(prediction - target)
 
+        # Calculate a scaling factor to normalize the loss
+        max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
+        normalize_norm1 = torch.mean(torch.mul(norm1, max.pow(-1)))
+
+        # Calculate LNL1 value and negate it (lower LNL1 is worse)
+        lnl1_value = -20 * torch.log10(normalize_norm1)
         loss = -lnl1_value
-        
-        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
         return loss
-    
+
+# Custom combined loss function using PSNR, SSIM, and LNL1 with specified weights
 class PSNR_SSIM_LNL1Loss(nn.Module):
     def __init__(self, weight_1, weight_2, weight_3):
         super(PSNR_SSIM_LNL1Loss, self).__init__()
-        self.w1 = weight_1
-        self.w2 = weight_2
-        self.w3 = weight_3
+        self.w1 = weight_1  # Weight for PSNR loss
+        self.w2 = weight_2  # Weight for SSIM loss
+        self.w3 = weight_3  # Weight for LNL1 loss
 
     def forward(self, prediction, target):
-        
+        # Calculate PSNR and negate it (lower PSNR is worse)
         psnr = PeakSignalNoiseRatio()
         psnr_value = psnr(prediction, target)
         psnr_loss = -psnr_value
 
-        # Calculate Structural Similarity Index (SSIM)
+        # Calculate SSIM and map it using the tangent function
         ssim = StructuralSimilarityIndexMeasure(data_range=1)
         ssim_value = ssim(prediction, target)
+        ssim_loss = torch.tan(math.pi / 2 * (1 - (1 + ssim_value) / 2))
 
-        # Calculate a function which maps [0,1] to (inf, 0]
-        ssim_loss = torch.tan(math.pi / 2 * (1 - ssim_value))
-        
+        # Calculate LNL1 and negate it (lower LNL1 is worse)
         max = torch.maximum(prediction, target) + 1e-3 * torch.ones_like(prediction)
-        norm1 = torch.absolute(prediction - target)
+        norm1 = torch.abs(prediction - target)
         normalize_norm1 = torch.mean(torch.mul(norm1, max.pow(-1)))
-        lnl1_value = -10*torch.log10(normalize_norm1)
+        lnl1_value = -20 * torch.log10(normalize_norm1)
         lnl1_loss = -lnl1_value
         
+        # Combine the three loss components with specified weights
         loss = (self.w1 * psnr_loss) + (self.w2 * ssim_loss) + (self.w3 * lnl1_loss)
-        # Since PSNR is typically used as a quality metric, we negate it to use it as a loss
         return loss
-    

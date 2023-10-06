@@ -1,198 +1,99 @@
-import torch
 import torch.nn as nn
-import torchvision.transforms as T
 
-# Define a CNN-based model for image enhancement
-class CNNImageEnhancementModel(nn.Module):
-    def __init__(self, input_channels, output_channels):
-        super(CNNImageEnhancementModel, self).__init__()
-        # Encoder layers for feature extraction
-        self.encoder = nn.Sequential(
-            nn.Conv2d(input_channels, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(128, 256, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(256, 512, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(512, 512, kernel_size=3, padding=1),
-            nn.ReLU()
-        )
-        # Upsampling layer for image upscaling
-        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
-        # Decoder layers for image reconstruction
-        self.decoder = nn.Sequential(
-            nn.Conv2d(512, 256, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(256, 128, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(128, output_channels, kernel_size=3, padding=1),
-            nn.Sigmoid()
-        )
+# Define a Residual Block for the generator model.
+class ResidualBlock(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(ResidualBlock, self).__init__()
+        # Define convolution layers and batch normalization.
+        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.leaky_relu = nn.LeakyReLU(0.2, inplace=True)
+        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1)
+        self.bn2 = nn.BatchNorm2d(out_channels)
 
     def forward(self, x):
-        # Forward pass through the model
-        encoded = self.encoder(x)
-        upscaled = self.upscale(encoded)
-        decoded = self.decoder(upscaled)
-        return decoded
-
-# Define a simpler CNN-based model for image enhancement
-class SimpleCNNImageEnhancementModel(nn.Module):
-    def __init__(self, input_channels, output_channels):
-        super(SimpleCNNImageEnhancementModel, self).__init__()
-        # Encoder layers for feature extraction
-        self.encoder = nn.Sequential(
-            nn.Conv2d(input_channels, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(64, 64, kernel_size=3, padding=1),
-            nn.ReLU()
-        )
-        # Upsampling layer for image upscaling
-        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
-        # Decoder layers for image reconstruction
-        self.decoder = nn.Sequential(
-            nn.Conv2d(64, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, output_channels, kernel_size=3, padding=1),
-            nn.Sigmoid()
-        )
-
-    def forward(self, x):
-        # Forward pass through the model
-        encoded = self.encoder(x)
-        upscaled = self.upscale(encoded)
-        decoded = self.decoder(upscaled)
-        return decoded
-
-# Define a self-attention mechanism
-class SelfAttention(nn.Module):
-    def __init__(self, in_channels):
-        super(SelfAttention, self).__init__()
-        self.query = nn.Conv2d(in_channels, in_channels // 8, kernel_size=1)
-        self.key = nn.Conv2d(in_channels, in_channels // 8, kernel_size=1)
-        self.value = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.gamma = nn.Parameter(torch.zeros(1))
-
-    def forward(self, x):
-        batch_size, channels, height, width = x.size()
-        query = self.query(x).view(batch_size, -1, height * width)
-        key = self.key(x).view(batch_size, -1, height * width)
-        value = self.value(x).view(batch_size, -1, height * width)
-
-        attention_map = torch.matmul(query.permute(0, 2, 1), key)
-        attention_map = torch.nn.functional.softmax(attention_map, dim=-1)
-
-        out = torch.matmul(attention_map, value.permute(0, 2, 1)).view(batch_size, channels, height, width)
-        out = self.gamma * out + x
+        residual = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.leaky_relu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out += residual  # Add the residual connection
         return out
 
-# Define a CNN-based model for image enhancement with self-attention
-class AttentionCNNImageEnhancementModel(nn.Module):
-    def __init__(self, input_channels, output_channels):
-        super(AttentionCNNImageEnhancementModel, self).__init__()
-        # Encoder layers for feature extraction with self-attention
+# Define the Generator model for image enhancement.
+class Generator(nn.Module):
+    def __init__(self):
+        super(Generator, self).__init__()
+
+        # Encoder
         self.encoder = nn.Sequential(
-            nn.Conv2d(input_channels, 16, kernel_size=3, padding=1),
-            nn.ReLU(),
-            SelfAttention(16),  # Apply self-attention here
-            nn.Conv2d(16, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            SelfAttention(32),  # Apply self-attention here
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            SelfAttention(64)  # Apply self-attention here
+            self.conv_block(3, 16),
+            ResidualBlock(16, 16),  # Residual block in the encoder
+            self.conv_block(16, 32),
+            ResidualBlock(32, 32),
+            self.conv_block(32, 64)
         )
-        # Upsampling layer for image upscaling
-        self.upscale = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
-        # Decoder layers for image reconstruction with self-attention
+
+        self.upsample = nn.ConvTranspose2d(64, 64, kernel_size=4, stride=2, padding=1)
+
+        # Decoder with 2x resolution upscaling
         self.decoder = nn.Sequential(
-            nn.Conv2d(64, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            SelfAttention(32),  # Apply self-attention here
-            nn.Conv2d(32, 16, kernel_size=3, padding=1),
-            SelfAttention(16),  # Apply self-attention here
-            nn.Conv2d(16, output_channels, kernel_size=3, padding=1),
-            nn.Sigmoid()
+            self.conv_block(64, 32),
+            ResidualBlock(32, 32),  # Residual block in the decoder
+            self.conv_block(32, 16),
+            nn.Conv2d(16, 3, kernel_size=3, stride=1, padding=1)  # Final convolution to produce the output
         )
 
+    def conv_block(self, in_channels, out_channels):
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True),  # LeakyReLU activation
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True),  # LeakyReLU activation
+        )
+    
     def forward(self, x):
-        # Forward pass through the model
-        encoded = self.encoder(x)
-        upscaled = self.upscale(encoded)
-        decoded = self.decoder(upscaled)
-        return decoded
+        x_enc = self.encoder(x)
+        x_upsample = self.upsample(x_enc)
+        output = self.decoder(x_upsample)
+        return output
 
+# Define a simpler Generator model for image enhancement.
 class SimpleGenerator(nn.Module):
     def __init__(self):
         super(SimpleGenerator, self).__init__()
 
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),  # Upsample by 2x
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),  # Additional convolution
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
-            nn.Tanh()
+        # Encoder
+        self.encoder = nn.Sequential(
+            self.conv_block(3, 8),
+            self.conv_block(8, 16),
+            self.conv_block(16, 32),
         )
 
-    def forward(self, x):
-        return self.model(x)
-    
+        self.upsample = nn.ConvTranspose2d(32, 32, kernel_size=4, stride=2, padding=1)
 
-    
-class SimplerGenerator(nn.Module):
-    def __init__(self):
-        super(SimplerGenerator, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(inplace=True),
-
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1),  # Upsample by 2x
-            nn.ReLU(inplace=True),
-
-            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),  # Additional convolution
-            nn.ReLU(inplace=True),
-            
-            nn.Conv2d(32, 3, kernel_size=3, stride=1, padding=1),
-            nn.Tanh()
+        # Decoder with 2x resolution upscaling
+        self.decoder = nn.Sequential(
+            self.conv_block(32, 16),
+            self.conv_block(16, 8),
+            nn.Conv2d(8, 3, kernel_size=3, stride=1, padding=1),  # Final convolution to produce the output
         )
 
-    def forward(self, x):
-        return self.model(x)
-    
-
-class SimplerDiscriminator(nn.Module):
-    def __init__(self):
-        super(SimplerDiscriminator, self).__init__()
-
-        self.model = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=3, stride=1, padding=1),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1),  # Downsample by 2x
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(0.2, inplace=True),
-
-            nn.Flatten(),
-            nn.Linear(32 * 25 * 25, 1),  # Fully connected layer to output a single scalar
-            nn.Sigmoid()  # Sigmoid activation to squash the output to [0, 1]
+    def conv_block(self, in_channels, out_channels):
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True),  # LeakyReLU activation
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.LeakyReLU(0.2, inplace=True),  # LeakyReLU activation
         )
-
+    
     def forward(self, x):
-        return self.model(x)
+        x_enc = self.encoder(x)
+        x_upsample = self.upsample(x_enc)
+        output = self.decoder(x_upsample)
+        return output

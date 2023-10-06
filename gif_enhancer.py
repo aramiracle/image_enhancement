@@ -2,11 +2,30 @@ import os
 import torch
 import torchvision.transforms as transforms
 import math
-from model import SimplerGenerator  # Import your custom model class
+from model import Generator  # Import your custom model class
 import imageio
+import numpy as np
+
+# Function to convert frames to RGB format
+def convert_to_rgb(frames):
+    rgb_frames = []
+    for frame in frames:
+        if frame.shape[-1] == 4:
+            # Remove alpha channel and convert to RGB if it exists
+            frame = frame[:, :, :3]
+        elif frame.shape[-1] == 1:
+            # Duplicate single-channel frame to create an RGB frame
+            frame = np.repeat(frame, 3, axis=-1)
+        elif frame.shape[-1] == 3:
+            # Leave frames with three channels as is
+            pass
+        else:
+            raise ValueError("Unsupported number of channels in the input frames")
+        rgb_frames.append(frame)
+    return rgb_frames
 
 # Define the path to the latest saved model
-model_path = "saved_models/gan/best_gan_checkpoint.pth"
+model_path = "saved_models/simple_residual_ssim_psnr_lnl1/best_cnn_image_enhancement_model.pth"
 
 # Define the enhancement factor (log2(ratio))
 enhancement_factor = 2.0  # Set the enhancement factor
@@ -17,8 +36,8 @@ preprocess = transforms.Compose([
 ])
 
 # Load the latest saved model
-model = SimplerGenerator()
-model.load_state_dict(torch.load(model_path)['generator_state_dict'])
+model = Generator()
+model.load_state_dict(torch.load(model_path))
 model.eval()  # Set the model to evaluation mode (no gradient computation)
 
 # Define the paths for input and output directories
@@ -40,7 +59,8 @@ for input_file in input_files:
     input_gif_path = os.path.join(input_directory, input_file)
 
     # Load the input GIF frames
-    input_gif_frames = imageio.mimread(input_gif_path)
+    input_gif_frames = imageio.mimread(input_gif_path, memtest=False)
+    input_gif_frames = convert_to_rgb(input_gif_frames)
 
     enhanced_frames = []
 
