@@ -22,46 +22,80 @@ This project aims to enhance images using deep learning techniques. It includes 
 
 ## Script Details
 
+### `main.py`
+
+- Purpose: Entry point for training and testing the image enhancement model.
+- Functionality:
+  - Handles command-line arguments for training and testing modes.
+  - Initializes the model, data loaders, and other necessary components.
+  - Executes training or testing based on user inputs.
+
+### `model.py`
+
+- Purpose: Defines the architecture of the image enhancement generator model.
+- Functionality:
+  - Implements the generator model using PyTorch.
+  - Provides options for both complex and simple generator architectures.
+  - Defines forward pass logic for enhancing input images.
+
+### `loss_functions.py`
+
+- Purpose: Contains custom loss functions for training the image enhancement model.
+- Functionality:
+  - Defines various loss functions, including PSNR, SSIM, LNL1, and a combined loss.
+  - Calculates loss values for model training and evaluation.
+
+### `data_loader.py`
+
+- Purpose: Manages data loading and augmentation for the training and testing datasets.
+- Functionality:
+  - Defines a custom dataset class for reading and preprocessing image data.
+  - Implements data augmentation techniques for training data.
+  - Provides data loaders for efficiently loading batches of data.
+
+### `train.py`
+
+- Purpose: Implements the training loop for the deep learning model.
+- Functionality:
+  - Loads the training dataset using data loaders from `data_loader.py`.
+  - Optimizes the model using a specified loss function and optimizer.
+  - Logs training progress and saves checkpoints during training.
+
+### `test.py`
+
+- Purpose: Performs testing and evaluation of the trained deep learning model.
+- Functionality:
+  - Loads the test dataset using data loaders from `data_loader.py`.
+  - Computes evaluation metrics such as PSNR, SSIM, VIF, and LNL1.
+  - Saves enhanced images and evaluation results.
+
+### `sample_plt.py`
+
+- Purpose: Contains functions for displaying random sample results.
+- Functionality:
+  - Randomly selects and visualizes input and enhanced images.
+  - Provides a visual assessment of the model's performance.
+
 ### `preprocess.py`
 
 - Purpose: Preprocesses image data before training the deep learning model.
 - Functionality:
   - Resizes images to specified target sizes or fractions.
-  - Uses multiprocessing for parallel processing.
-- Usage: `python preprocess.py`
-
-### `train.py`
-
-- Purpose: Trains the deep learning model for image enhancement.
-- Functionality:
-  - Loads the training dataset.
-  - Implements training loop and optimization.
-  - Supports various loss functions (PSNR, SSIM, LNL1, combined loss).
-- Usage: `python train.py`
-
-### `test.py`
-
-- Purpose: Tests and evaluates the trained deep learning model.
-- Functionality:
-  - Loads the test dataset.
-  - Computes evaluation metrics (PSNR, SSIM, VIF, LNL1).
-- Usage: `python test.py`
+  - Utilizes multiprocessing for parallel processing of images.
 
 ### `gif_enhancer.py`
 
 - Purpose: Enhances GIF files using the trained model.
 - Functionality:
   - Reads input GIF frames and applies enhancement iteratively.
-  - Saves enhanced GIFs.
-- Usage: `python gif_enhancer.py`
+  - Saves enhanced GIFs as output.
 
 ### `image_enhancer.py`
 
 - Purpose: Enhances single images using the trained model.
 - Functionality:
   - Reads input images and applies enhancement iteratively.
-  - Saves enhanced images.
-- Usage: `python image_enhancer.py`
+  - Saves enhanced images as output.
 
 ## Getting Started
 
@@ -102,6 +136,8 @@ Enhanced images and evaluation metrics in the `results/` directory.
 - Custom loss functions based on `torchmetrics` library.
 - Dataset sourced from [DIV2K dataset](https://data.vision.ee.ethz.ch/cvl/DIV2K/) from ETH Zurich.
 - Dataset structure follows DIV2K dataset format.
+
+Feel free to customize and extend this project for your image enhancement tasks.
 
 Feel free to customize and extend this project for your image enhancement tasks.
 
